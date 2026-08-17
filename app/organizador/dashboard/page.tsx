@@ -80,7 +80,7 @@ export default async function OrganizerDashboard() {
         <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-3">
           <div className="rounded-xl bg-surface-1 p-4">
             <p className="text-xs text-muted">Recaudado total</p>
-            <p className="mt-1 text-2xl font-medium text-amber-500">
+            <p className="mt-1 text-2xl font-medium text-[var(--text-warning)]">
               ${totalRecaudado.toLocaleString("es-AR")}
             </p>
           </div>

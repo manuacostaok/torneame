@@ -4,6 +4,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { requireRole } from "@/auth";
 import { revalidatePath } from "next/cache";
+import { assertSameOrigin } from "@/lib/security";
 
 const sponsorSchema = z.object({
   tournamentId: z.string(),
@@ -14,6 +15,7 @@ const sponsorSchema = z.object({
 });
 
 export async function addSponsor(input: z.infer<typeof sponsorSchema>) {
+  assertSameOrigin();
   const session = await requireRole(["ORGANIZER", "ADMIN"]);
   const data = sponsorSchema.parse(input);
 

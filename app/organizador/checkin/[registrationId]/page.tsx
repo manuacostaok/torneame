@@ -25,7 +25,7 @@ export default async function CheckInPage({
       <p className="text-sm text-secondary">{registration.tournament.name}</p>
       <h1 className="mt-1 text-xl font-medium">{registration.player.user.name}</h1>
       {registration.checkedInAt ? (
-        <p className="mt-4 text-sm text-emerald-500">Ya hizo check-in.</p>
+        <p className="mt-4 text-sm text-[var(--text-success)]">Ya hizo check-in.</p>
       ) : (
         <CheckInConfirmButton registrationId={registration.id} />
       )}

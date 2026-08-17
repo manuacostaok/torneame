@@ -104,3 +104,18 @@ conviene pasar a `prisma migrate` con migraciones versionadas en vez de
 5. Perfil de jugador público con historial y ranking cross-organizador.
 
 Este orden no es arbitrario: el motor de brackets es el módulo más riesgoso técnicamente (es lógica, no CRUD), así que lo resolvemos y testeamos primero, antes de construir la UI sobre una base inestable.
+
+## Auditoría y correcciones de esta vuelta
+
+Revisando el proyecto completo encontré y corregí 3 huecos reales:
+
+- **Colores inconsistentes**: varias pantallas usaban clases de Tailwind pensadas para modo claro (`bg-red-100 text-red-700`) sobre un fondo 100% oscuro — se veían como parches fuera de lugar. Agregué tokens semánticos (`--bg-danger`, `--text-success`, `--text-warning`, etc.) a `globals.css` y los apliqué en todo el proyecto.
+- **`assertSameOrigin()` (la capa extra de CSRF) estaba creada pero nunca conectada a ningún server action** — quedó como código muerto desde que la armamos. Ahora está llamada en `registerForTournament`, `createTournament`, `createProduct`, `buyProduct`, `startProSubscription` y `addSponsor` — las acciones que mueven plata o publican contenido en nombre del organizador.
+- **Nunca existió un `next.config.js`** — lo creé con cabeceras de seguridad HTTP (`X-Frame-Options` contra clickjacking, `X-Content-Type-Options`, `Referrer-Policy`, `Permissions-Policy` desactivando cámara/micrófono/geolocalización que la app no usa). Nota: no agregué `Content-Security-Policy` todavía — con imágenes externas (QR de Mercado Pago, logos de sponsors, fotos de productos), fuentes de Google y estilos inline en varios componentes, una CSP mal armada rompe cosas reales sin que yo pueda probarla en este entorno; queda como próximo paso, no lo quise adivinar.
+
+Verificación hecha (sin poder correr `next build` real, por las limitaciones de red de este entorno):
+- Todos los imports `@/...` del proyecto resuelven a un archivo que existe de verdad (chequeado con un script, no a ojo).
+- El schema de Prisma tiene las llaves balanceadas y ningún modelo duplicado (19 modelos en total).
+- Se re-corrieron todas las validaciones de lógica del día (motor de brackets, premio dinámico, sorteo de equipos, sugerencias) y siguen dando los resultados esperados.
+
+Ver `DEPLOY.md` para la guía de deploy completa, sin necesitar terminal.

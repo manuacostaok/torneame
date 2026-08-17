@@ -39,7 +39,7 @@ export default async function MyTicketPage({ params }: { params: { slug: string 
       </div>
 
       {registration.checkedInAt && (
-        <p className="mt-4 text-sm text-emerald-500">Ya hiciste check-in ✓</p>
+        <p className="mt-4 text-sm text-[var(--text-success)]">Ya hiciste check-in ✓</p>
       )}
     </main>
   );

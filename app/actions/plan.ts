@@ -2,6 +2,7 @@
 
 import { prisma } from "@/lib/prisma";
 import { requireRole } from "@/auth";
+import { assertSameOrigin } from "@/lib/security";
 import { MercadoPagoConfig, PreApproval } from "mercadopago";
 
 const mpClient = new MercadoPagoConfig({ accessToken: process.env.MERCADOPAGO_ACCESS_TOKEN! });
@@ -19,6 +20,7 @@ const PRO_MONTHLY_PRICE_ARS = 12000;
  * confirma Mercado Pago del lado del servidor.
  */
 export async function startProSubscription() {
+  assertSameOrigin();
   const session = await requireRole(["ORGANIZER"]);
 
   const organizer = await prisma.organizerProfile.findUnique({

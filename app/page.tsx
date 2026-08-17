@@ -7,6 +7,7 @@ import { RankingPreview } from "./components/RankingPreview";
 import { Testimonials } from "./components/Testimonials";
 import { FAQ } from "./components/FAQ";
 import { Footer } from "./components/Footer";
+import { JoystickLogo } from "./components/JoystickLogo";
 import Link from "next/link";
 
 export const revalidate = 60;
@@ -27,7 +28,12 @@ export default async function LandingPage() {
       <AnimatedBackground />
 
       <nav className="flex items-center justify-between px-4 py-4 sm:px-8">
-        <span className="text-lg font-medium">Torneame</span>
+        <Link href="/" className="flex items-center gap-2">
+          <JoystickLogo size={28} className="text-white" />
+          <span style={{ fontFamily: "var(--font-heading)" }} className="text-lg font-medium">
+            Torneame
+          </span>
+        </Link>
         <div className="hidden gap-6 text-sm text-secondary sm:flex">
           <Link href="/torneos">Torneos</Link>
           <Link href="/ranking">Ranking</Link>
@@ -40,7 +46,7 @@ export default async function LandingPage() {
 
       {/* Hero */}
       <section className="mx-auto max-w-2xl px-4 py-10 text-center sm:py-16">
-        <span className="inline-block rounded-full bg-red-100 px-3 py-1 text-xs text-red-700">
+        <span className="inline-block rounded-full bg-[var(--bg-danger)] px-3 py-1 text-xs text-[var(--text-danger)]">
           {upcomingTournaments.filter((t) => t.status === "IN_PROGRESS").length} torneos en vivo ahora
         </span>
         <h1 className="mt-4 text-3xl font-medium leading-tight sm:text-5xl">
@@ -84,8 +90,8 @@ export default async function LandingPage() {
               <span
                 className={`rounded-md px-2 py-0.5 text-xs ${
                   t.status === "IN_PROGRESS"
-                    ? "bg-red-100 text-red-700"
-                    : "bg-green-100 text-green-700"
+                    ? "bg-[var(--bg-danger)] text-[var(--text-danger)]"
+                    : "bg-[var(--bg-success)] text-[var(--text-success)]"
                 }`}
               >
                 {t.status === "IN_PROGRESS" ? "EN VIVO" : "ABIERTO"}
@@ -95,7 +101,7 @@ export default async function LandingPage() {
             <p className="mt-1 text-sm text-secondary">
               {t._count.registrations}/{t.maxPlayers} inscriptos
             </p>
-            <p className="mt-2 font-medium text-amber-600">
+            <p className="mt-2 font-medium text-[var(--text-warning)]">
               ${Number(t.prizePoolBase).toLocaleString("es-AR")} en premios
             </p>
           </Link>

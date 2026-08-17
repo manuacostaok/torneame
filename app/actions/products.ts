@@ -4,7 +4,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { auth, requireRole } from "@/auth";
 import { MercadoPagoConfig, Preference } from "mercadopago";
-import { isRateLimited } from "@/lib/security";
+import { isRateLimited, assertSameOrigin } from "@/lib/security";
 
 const mpClient = new MercadoPagoConfig({ accessToken: process.env.MERCADOPAGO_ACCESS_TOKEN! });
 
@@ -16,6 +16,7 @@ const productSchema = z.object({
 });
 
 export async function createProduct(input: z.infer<typeof productSchema>) {
+  assertSameOrigin();
   const session = await requireRole(["ORGANIZER", "ADMIN"]);
   const data = productSchema.parse(input);
 
@@ -34,6 +35,7 @@ export async function createProduct(input: z.infer<typeof productSchema>) {
  * caso de uso, no una integración nueva desde cero.
  */
 export async function buyProduct(productId: string) {
+  assertSameOrigin();
   const session = await auth();
   if (!session?.user) throw new Error("Necesitás iniciar sesión para comprar");
 

@@ -87,7 +87,7 @@ export default async function OrganizerProfilePage({ params }: { params: { slug:
                   <img src={p.imageUrl} alt={p.name} className="mb-2 aspect-square w-full rounded-md object-cover" />
                 )}
                 <p className="text-sm font-medium">{p.name}</p>
-                <p className="mb-2 text-sm text-amber-600">
+                <p className="mb-2 text-sm text-[var(--text-warning)]">
                   ${Number(p.price).toLocaleString("es-AR")}
                 </p>
                 <BuyProductButton productId={p.id} />

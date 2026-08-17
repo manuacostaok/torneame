@@ -19,6 +19,16 @@
      el resto de la UI se queda en Inter/Space Grotesk, que siguen siendo
      mucho más legibles para texto largo (stats, comentarios, formularios) */
   --font-pixel: "Press Start 2P", "Space Grotesk", monospace;
+
+  /* Colores semánticos para fondo oscuro — un rojo/verde pastel de modo
+     claro (bg-red-100 estilo Tailwind default) se ve como un parche fuera
+     de lugar sobre --surface-0. Estos son translúcidos sobre oscuro. */
+  --bg-danger: rgba(239, 68, 68, 0.16);
+  --text-danger: #fca5a5;
+  --bg-success: rgba(16, 185, 129, 0.16);
+  --text-success: #6ee7b7;
+  --bg-warning: rgba(245, 158, 11, 0.16);
+  --text-warning: #fcd34d;
 }
 
 body {

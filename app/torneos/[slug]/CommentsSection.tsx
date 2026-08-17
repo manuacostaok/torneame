@@ -75,7 +75,7 @@ export function CommentsSection({
       ) : (
         <p className="mb-4 text-sm text-muted">Iniciá sesión para dejar un comentario.</p>
       )}
-      {error && <p className="mb-3 text-sm text-red-600">{error}</p>}
+      {error && <p className="mb-3 text-sm text-[var(--text-danger)]">{error}</p>}
 
       <ul className="flex flex-col gap-3">
         {comments.map((c) => (

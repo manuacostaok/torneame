@@ -110,7 +110,7 @@ export default async function PlayerDashboard() {
                     <p className="font-medium">{r.tournament.name}</p>
                     <p className="text-xs text-muted">{r.tournament.game.name}</p>
                   </div>
-                  <span className="rounded-md bg-red-100 px-2 py-0.5 text-xs text-red-700">
+                  <span className="rounded-md bg-[var(--bg-danger)] px-2 py-0.5 text-xs text-[var(--text-danger)]">
                     En vivo
                   </span>
                 </Link>

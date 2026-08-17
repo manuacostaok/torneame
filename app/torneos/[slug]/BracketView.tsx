@@ -30,7 +30,7 @@ export function BracketView({
                 key={match.id}
                 className={`rounded-md p-2 text-sm ${
                   match.winnerId
-                    ? "bg-green-100 text-green-800"
+                    ? "bg-[var(--bg-success)] text-[var(--text-success)]"
                     : match.playerAId && match.playerBId
                     ? "border border-accent bg-surface-1"
                     : "bg-surface-1 text-muted"

@@ -21,7 +21,7 @@ export function CheckInConfirmButton({ registrationId }: { registrationId: strin
     });
   }
 
-  if (done) return <p className="mt-4 text-sm text-emerald-500">¡Listo, check-in confirmado!</p>;
+  if (done) return <p className="mt-4 text-sm text-[var(--text-success)]">¡Listo, check-in confirmado!</p>;
 
   return (
     <button

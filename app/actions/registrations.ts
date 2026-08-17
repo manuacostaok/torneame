@@ -3,7 +3,7 @@
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
 import { MercadoPagoConfig, Preference } from "mercadopago";
-import { isRateLimited } from "@/lib/security";
+import { isRateLimited, assertSameOrigin } from "@/lib/security";
 
 const mpClient = new MercadoPagoConfig({ accessToken: process.env.MERCADOPAGO_ACCESS_TOKEN! });
 
@@ -16,6 +16,7 @@ const COMMISSION_RATE = 0.07;
  * (confirmPayment), nunca se marca como pagado desde el cliente.
  */
 export async function registerForTournament(tournamentId: string) {
+  assertSameOrigin();
   const session = await auth();
   if (!session?.user) throw new Error("Necesitás iniciar sesión para inscribirte");
 

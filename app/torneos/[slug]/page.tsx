@@ -72,9 +72,9 @@ export default async function TournamentPage({ params }: { params: { slug: strin
           <div className="mt-4 grid grid-cols-3 gap-3">
             <div className="rounded-md bg-surface-2 p-3">
               <p className="text-xs text-muted">Premio total</p>
-              <p className="font-medium text-amber-600">${currentPrize.toLocaleString("es-AR")}</p>
+              <p className="font-medium text-[var(--text-warning)]">${currentPrize.toLocaleString("es-AR")}</p>
               {isPrizeBoosted && (
-                <span className="block text-xs text-emerald-500">↑ escalando</span>
+                <span className="block text-xs text-[var(--text-success)]">↑ escalando</span>
               )}
             </div>
             <div className="rounded-md bg-surface-2 p-3">

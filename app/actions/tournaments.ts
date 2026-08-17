@@ -4,7 +4,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { requireRole } from "@/auth";
 import { revalidatePath } from "next/cache";
-import { isRateLimited } from "@/lib/security";
+import { isRateLimited, assertSameOrigin } from "@/lib/security";
 import { notifyFollowersOfNewTournament } from "./follows";
 
 const createTournamentSchema = z.object({
@@ -23,6 +23,7 @@ const createTournamentSchema = z.object({
 });
 
 export async function createTournament(input: z.infer<typeof createTournamentSchema>) {
+  assertSameOrigin();
   const session = await requireRole(["ORGANIZER", "ADMIN"]);
 
   if (isRateLimited(`create-tournament:${session.user.id}`, 10, 60_000)) {
