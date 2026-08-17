@@ -3,15 +3,16 @@ import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
 
-export default async function MyTicketPage({ params }: { params: { slug: string } }) {
+export default async function MyTicketPage({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params;
   const session = await auth();
-  if (!session?.user) redirect(`/login?redirect=/torneos/${params.slug}/mi-entrada`);
+  if (!session?.user) redirect(`/login?redirect=/torneos/${slug}/mi-entrada`);
 
   const player = await prisma.playerProfile.findUnique({ where: { userId: session.user.id } });
   if (!player) notFound();
 
   const registration = await prisma.registration.findUnique({
-    where: { tournamentId_playerId: { tournamentId: params.slug, playerId: player.id } },
+    where: { tournamentId_playerId: { tournamentId: slug, playerId: player.id } },
     include: { tournament: true },
   });
   if (!registration) notFound();

@@ -1,14 +1,21 @@
-// Torneame — schema de base de datos
-// Refleja el modelo definido en el Bloque 3 (arquitectura y roadmap)
+// ============================================================
+// TORNEAME
+// Prisma + MongoDB
+// Compatible con Prisma 5.22
+// ============================================================
 
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "mongodb"
   url      = env("DATABASE_URL")
 }
+
+// ============================================================
+// ENUMS
+// ============================================================
 
 enum UserRole {
   PLAYER
@@ -56,278 +63,464 @@ enum MatchStatus {
   FINISHED
 }
 
-model User {
-  id            String    @id @default(cuid())
-  email         String    @unique
-  passwordHash  String?
-  name          String
-  avatarUrl     String?
-  phone         String? // formato E.164, ej. +5491122334455 — para WhatsApp
-  whatsappOptIn Boolean   @default(false)
-  role          UserRole  @default(PLAYER)
-  referralCode  String    @unique @default(cuid())
-  referredById  String?
-  referredBy    User?     @relation("Referrals", fields: [referredById], references: [id])
-  referrals     User[]    @relation("Referrals")
-  referralCreditsArs Int  @default(0) // se suman cuando un referido paga su primera inscripción
-  createdAt     DateTime  @default(now())
-
-  playerProfile    PlayerProfile?
-  organizerProfile OrganizerProfile?
-  notifications    Notification[]
-  following        Follow[]          @relation("FollowerUser")
-  comments         Comment[]
-  pushSubscriptions PushSubscription[]
-  productOrders     ProductOrder[]
-}
-
-model PlayerProfile {
-  id         String   @id @default(cuid())
-  userId     String   @unique
-  user       User     @relation(fields: [userId], references: [id])
-  gamertag   String
-  bio        String?
-  eloRating  Int      @default(1000)
-
-  registrations Registration[]
-  achievements  Achievement[]
-}
-
-model OrganizerProfile {
-  id           String        @id @default(cuid())
-  userId       String        @unique
-  user         User          @relation(fields: [userId], references: [id])
-  orgName      String
-  slug         String        @unique
-  logoUrl      String?
-  bio          String?
-  verified     Boolean       @default(false)
-  plan         OrganizerPlan @default(FREE)
-  customDomain String? // solo plan PRO — ej. "torneoscoronel.com"
-  planExpiresAt DateTime?
-  products     Product[]
-  networkId    String?
-  network      Network?      @relation(fields: [networkId], references: [id])
-
-  tournaments Tournament[]
-  followers   Follow[]     @relation("FollowedOrganizer")
-}
-
-model Follow {
-  followerId  String
-  follower    User   @relation("FollowerUser", fields: [followerId], references: [id])
-  organizerId String
-  organizer   OrganizerProfile @relation("FollowedOrganizer", fields: [organizerId], references: [id])
-
-  @@id([followerId, organizerId])
-}
-
-model Game {
-  id           String  @id @default(cuid())
-  name         String
-  platform     String?
-  coverImageUrl String?
-
-  tournaments Tournament[]
-  friendTournaments FriendTournament[]
-}
-
-model Tournament {
-  id                    String                 @id @default(cuid())
-  organizerId           String
-  organizer             OrganizerProfile       @relation(fields: [organizerId], references: [id])
-  gameId                String
-  game                  Game                   @relation(fields: [gameId], references: [id])
-  name                  String
-  description           String?
-  format                TournamentFormat
-  mode                  String // ej: "1v1", "2v2", "3v3 vale todo" — texto libre, ver justificación en Bloque 3
-  entryFee              Decimal                @default(0)
-  prizePoolBase         Decimal                @default(0)
-  prizePoolDynamicRule  Json? // regla de escalado de premio (ej. +16 jugadores aumenta el premio)
-  locationType          TournamentLocationType
-  venueAddress          String?
-  startsAt              DateTime
-  registrationDeadline  DateTime
-  maxPlayers            Int
-  status                TournamentStatus       @default(DRAFT)
-  createdAt             DateTime               @default(now())
-
-  registrations Registration[]
-  bracket       Bracket?
-  comments      Comment[]
-  sponsors      Sponsor[]
-}
-
-model Registration {
-  id            String         @id @default(cuid())
-  tournamentId  String
-  tournament    Tournament     @relation(fields: [tournamentId], references: [id])
-  playerId      String
-  player        PlayerProfile  @relation(fields: [playerId], references: [id])
-  payment       Payment?
-  checkedInAt   DateTime?
-  seed          Int?
-  createdAt     DateTime       @default(now())
-
-  @@unique([tournamentId, playerId])
-}
-
-model Payment {
-  id               String        @id @default(cuid())
-  registrationId   String        @unique
-  registration     Registration  @relation(fields: [registrationId], references: [id])
-  amount           Decimal
-  provider         String        @default("mercadopago")
-  status           PaymentStatus @default(PENDING)
-  commissionAmount Decimal       @default(0)
-  createdAt        DateTime      @default(now())
-}
-
-model Bracket {
-  id            String     @id @default(cuid())
-  tournamentId  String     @unique
-  tournament    Tournament @relation(fields: [tournamentId], references: [id])
-  structureJson Json
-  currentRound  Int        @default(1)
-
-  matches Match[]
-}
-
-model Match {
-  id           String      @id @default(cuid())
-  bracketId    String
-  bracket      Bracket     @relation(fields: [bracketId], references: [id])
-  round        Int
-  playerAId    String?
-  playerBId    String?
-  scoreA       Int?
-  scoreB       Int?
-  winnerId     String?
-  status       MatchStatus @default(PENDING)
-  scheduledAt  DateTime?
-}
-
-model Notification {
-  id        String   @id @default(cuid())
-  userId    String
-  user      User     @relation(fields: [userId], references: [id])
-  type      String
-  payload   Json
-  readAt    DateTime?
-  createdAt DateTime @default(now())
-}
-
-model Achievement {
-  id           String        @id @default(cuid())
-  playerId     String
-  player       PlayerProfile @relation(fields: [playerId], references: [id])
-  type         String
-  tournamentId String?
-  earnedAt     DateTime      @default(now())
-}
-
-model Comment {
-  id           String     @id @default(cuid())
-  tournamentId String
-  tournament   Tournament @relation(fields: [tournamentId], references: [id])
-  authorId     String
-  author       User       @relation(fields: [authorId], references: [id])
-  body         String
-  createdAt    DateTime   @default(now())
-}
-
-// "Modo Amigos": torneo instantáneo sin inscripción paga ni cuentas para
-// los invitados — el host solo carga nombres. Separado de Tournament a
-// propósito: no tiene pagos, no tiene cupos que se llenan con el tiempo,
-// se resuelve todo en el momento de crearlo. Mezclarlo con el modelo de
-// Tournament hubiera llenado ese modelo de campos nulos la mitad del
-// tiempo (entryFee, registrationDeadline, etc. no aplican acá).
-model FriendTournament {
-  id          String   @id @default(cuid())
-  hostUserId  String? // opcional: puede armarse sin estar logueado
-  gameId      String
-  game        Game     @relation(fields: [gameId], references: [id])
-  mode        String // "1v1", "2v2", etc.
-  playerNames Json // nombres cargados por el host, sin cuentas
-  teams       Json // resultado del sorteo: [{ id, name, players }]
-  bracketJson Json // misma forma que BracketStructure del motor de brackets
-  createdAt   DateTime @default(now())
-}
-
-// Una fila por dispositivo/navegador suscripto — la misma persona puede
-// tener el celular y la compu suscriptos a la vez, cada uno con su propio
-// endpoint de push, por eso esto no vive como campo suelto en User.
-model PushSubscription {
-  id        String   @id @default(cuid())
-  userId    String
-  user      User     @relation(fields: [userId], references: [id])
-  endpoint  String   @unique
-  p256dh    String
-  auth      String
-  createdAt DateTime @default(now())
-}
-
 enum SponsorTier {
   BASIC
   FEATURED
 }
 
-// Un sponsor vive atado a UN torneo puntual, no al organizador en
-// general — una marca de bebidas puede querer auspiciar el torneo grande
-// del sábado y no el amistoso del martes. Si el organizador quiere el
-// mismo sponsor en varios torneos, se crea una fila por torneo (repetir
-// el nombre/logo es más simple que armar un catálogo de sponsors
-// reusables que en la práctica casi nadie reusa igual).
-model Sponsor {
-  id           String      @id @default(cuid())
-  tournamentId String
-  tournament   Tournament  @relation(fields: [tournamentId], references: [id])
+// ============================================================
+// USER
+// ============================================================
+
+model User {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+
+  email        String  @unique
+  passwordHash String?
   name         String
-  logoUrl      String?
-  linkUrl      String?
-  tier         SponsorTier @default(BASIC)
-  createdAt    DateTime    @default(now())
+  avatarUrl    String?
+  phone        String?
+
+  whatsappOptIn Boolean  @default(false)
+  role          UserRole @default(PLAYER)
+
+  referralCode String @unique @default(cuid())
+
+  referredById String? @db.ObjectId
+  referredBy   User?   @relation("UserReferrals", fields: [referredById], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  referrals User[] @relation("UserReferrals")
+
+  referralCreditsArs Int @default(0)
+
+  createdAt DateTime @default(now())
+
+  playerProfile    PlayerProfile?
+  organizerProfile OrganizerProfile?
+
+  notifications Notification[]
+
+  following Follow[] @relation("FollowerUser")
+
+  pushSubscriptions PushSubscription[]
+
+  comments Comment[]
+
+  productOrders ProductOrder[]
 }
 
-// Marketplace de merchandising del organizador — remeras, gorras, lo que
-// venda. Reusa el mismo patrón de pago que las inscripciones (Preference
-// de Mercado Pago + confirmación por webhook), no es casualidad: es la
-// misma pieza de infraestructura sirviendo dos casos de uso distintos.
-model Product {
-  id          String   @id @default(cuid())
-  organizerId String
-  organizer   OrganizerProfile @relation(fields: [organizerId], references: [id])
+// ============================================================
+// PLAYER PROFILE
+// ============================================================
+
+model PlayerProfile {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+
+  userId String @unique @db.ObjectId
+
+  user User @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  gamertag  String
+  bio       String?
+  eloRating Int     @default(1000)
+
+  registrations Registration[]
+
+  achievements Achievement[]
+}
+
+// ============================================================
+// ORGANIZER PROFILE
+// ============================================================
+
+model OrganizerProfile {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+
+  userId String @unique @db.ObjectId
+
+  user User @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  orgName String
+  slug    String @unique
+
+  logoUrl String?
+  bio     String?
+
+  verified Boolean @default(false)
+
+  plan OrganizerPlan @default(FREE)
+
+  customDomain  String?
+  planExpiresAt DateTime?
+
+  networkId String? @db.ObjectId
+
+  network Network? @relation(fields: [networkId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  tournaments Tournament[]
+
+  followers Follow[] @relation("FollowedOrganizer")
+
+  products Product[]
+}
+
+// ============================================================
+// FOLLOW
+// ============================================================
+
+model Follow {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+
+  followerId String @db.ObjectId
+
+  follower User @relation("FollowerUser", fields: [followerId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  organizerId String @db.ObjectId
+
+  organizer OrganizerProfile @relation("FollowedOrganizer", fields: [organizerId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@unique([followerId, organizerId])
+}
+
+// ============================================================
+// GAME
+// ============================================================
+
+model Game {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+
+  name          String
+  platform      String?
+  coverImageUrl String?
+
+  tournaments Tournament[]
+
+  friendTournaments FriendTournament[]
+}
+
+// ============================================================
+// TOURNAMENT
+// ============================================================
+
+model Tournament {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+
+  organizerId String @db.ObjectId
+
+  organizer OrganizerProfile @relation(fields: [organizerId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  gameId String @db.ObjectId
+
+  game Game @relation(fields: [gameId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
   name        String
   description String?
-  price       Decimal
-  imageUrl    String?
-  active      Boolean  @default(true)
-  createdAt   DateTime @default(now())
+
+  format TournamentFormat
+  mode   String
+
+  entryFee      Float @default(0)
+  prizePoolBase Float @default(0)
+
+  prizePoolDynamicRule Json?
+
+  locationType TournamentLocationType
+
+  venueAddress String?
+
+  startsAt             DateTime
+  registrationDeadline DateTime
+
+  maxPlayers Int
+
+  status TournamentStatus @default(DRAFT)
+
+  createdAt DateTime @default(now())
+
+  registrations Registration[]
+
+  bracket Bracket?
+
+  comments Comment[]
+
+  sponsors Sponsor[]
+}
+
+// ============================================================
+// REGISTRATION
+// ============================================================
+
+model Registration {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+
+  tournamentId String @db.ObjectId
+
+  tournament Tournament @relation(fields: [tournamentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  playerId String @db.ObjectId
+
+  player PlayerProfile @relation(fields: [playerId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  payment Payment?
+
+  checkedInAt DateTime?
+
+  seed Int?
+
+  createdAt DateTime @default(now())
+
+  @@unique([tournamentId, playerId])
+}
+
+// ============================================================
+// PAYMENT
+// ============================================================
+
+model Payment {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+
+  registrationId String @unique @db.ObjectId
+
+  registration Registration @relation(fields: [registrationId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  amount Float
+
+  provider String @default("mercadopago")
+
+  status PaymentStatus @default(PENDING)
+
+  commissionAmount Float @default(0)
+
+  createdAt DateTime @default(now())
+}
+
+// ============================================================
+// BRACKET
+// ============================================================
+
+model Bracket {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+
+  tournamentId String @unique @db.ObjectId
+
+  tournament Tournament @relation(fields: [tournamentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  structureJson Json
+
+  currentRound Int @default(1)
+
+  matches Match[]
+}
+
+// ============================================================
+// MATCH
+// ============================================================
+
+model Match {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+
+  bracketId String @db.ObjectId
+
+  bracket Bracket @relation(fields: [bracketId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  round Int
+
+  playerAId String? @db.ObjectId
+  playerBId String? @db.ObjectId
+  winnerId  String? @db.ObjectId
+
+  scoreA Int?
+  scoreB Int?
+
+  status MatchStatus @default(PENDING)
+
+  scheduledAt DateTime?
+}
+
+// ============================================================
+// NOTIFICATION
+// ============================================================
+
+model Notification {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+
+  userId String @db.ObjectId
+
+  user User @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  type String
+
+  payload Json
+
+  readAt DateTime?
+
+  createdAt DateTime @default(now())
+}
+
+// ============================================================
+// ACHIEVEMENT
+// ============================================================
+
+model Achievement {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+
+  playerId String @db.ObjectId
+
+  player PlayerProfile @relation(fields: [playerId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  type String
+
+  tournamentId String? @db.ObjectId
+
+  earnedAt DateTime @default(now())
+}
+
+// ============================================================
+// COMMENT
+// ============================================================
+
+model Comment {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+
+  tournamentId String @db.ObjectId
+
+  tournament Tournament @relation(fields: [tournamentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  authorId String @db.ObjectId
+
+  author User @relation(fields: [authorId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  body String
+
+  createdAt DateTime @default(now())
+}
+
+// ============================================================
+// FRIEND TOURNAMENT
+// ============================================================
+
+model FriendTournament {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+
+  hostUserId String? @db.ObjectId
+
+  gameId String @db.ObjectId
+
+  game Game @relation(fields: [gameId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  mode String
+
+  playerNames Json
+
+  teams Json
+
+  bracketJson Json
+
+  createdAt DateTime @default(now())
+}
+
+// ============================================================
+// PUSH SUBSCRIPTION
+// ============================================================
+
+model PushSubscription {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+
+  userId String @db.ObjectId
+
+  user User @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  endpoint String @unique
+
+  p256dh String
+
+  auth String
+
+  createdAt DateTime @default(now())
+}
+
+// ============================================================
+// SPONSOR
+// ============================================================
+
+model Sponsor {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+
+  tournamentId String @db.ObjectId
+
+  tournament Tournament @relation(fields: [tournamentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  name String
+
+  logoUrl String?
+
+  linkUrl String?
+
+  tier SponsorTier @default(BASIC)
+
+  createdAt DateTime @default(now())
+}
+
+// ============================================================
+// PRODUCT
+// ============================================================
+
+model Product {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+
+  organizerId String @db.ObjectId
+
+  organizer OrganizerProfile @relation(fields: [organizerId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  name String
+
+  description String?
+
+  price Float
+
+  imageUrl String?
+
+  active Boolean @default(true)
+
+  createdAt DateTime @default(now())
 
   orders ProductOrder[]
 }
 
+// ============================================================
+// PRODUCT ORDER
+// ============================================================
+
 model ProductOrder {
-  id        String        @id @default(cuid())
-  productId String
-  product   Product       @relation(fields: [productId], references: [id])
-  buyerId   String
-  buyer     User          @relation(fields: [buyerId], references: [id])
-  status    PaymentStatus @default(PENDING)
-  createdAt DateTime      @default(now())
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+
+  productId String @db.ObjectId
+
+  product Product @relation(fields: [productId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  buyerId String @db.ObjectId
+
+  buyer User @relation(fields: [buyerId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  status PaymentStatus @default(PENDING)
+
+  createdAt DateTime @default(now())
 }
 
-// Red/franquicia: varios organizadores en distintas ciudades operando
-// bajo una marca en común (el caso que vos planteaste — "esto se hace en
-// muchas ciudades"). No fusiona los organizadores en uno solo: cada uno
-// sigue siendo dueño de sus propios torneos, cobros y seguidores, la red
-// es solo la vidriera que los agrupa.
+// ============================================================
+// NETWORK
+// ============================================================
+
 model Network {
-  id       String             @id @default(cuid())
-  name     String
-  slug     String             @unique
-  logoUrl  String?
-  bio      String?
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+
+  name String
+
+  slug String @unique
+
+  logoUrl String?
+
+  bio String?
+
   organizers OrganizerProfile[]
 }

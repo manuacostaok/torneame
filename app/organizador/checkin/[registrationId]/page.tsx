@@ -6,13 +6,14 @@ import { prisma } from "@/lib/prisma";
 export default async function CheckInPage({
   params,
 }: {
-  params: { registrationId: string };
+  params: Promise<{ registrationId: string }>;
 }) {
+  const { registrationId } = await params;
   const session = await auth();
-  if (!session?.user) redirect(`/login?redirect=/organizador/checkin/${params.registrationId}`);
+  if (!session?.user) redirect(`/login?redirect=/organizador/checkin/${registrationId}`);
 
   const registration = await prisma.registration.findUnique({
-    where: { id: params.registrationId },
+    where: { id: registrationId },
     include: { player: { include: { user: true } }, tournament: true },
   });
 

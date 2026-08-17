@@ -6,16 +6,17 @@ export const revalidate = 120;
 export default async function RankingPage({
   searchParams,
 }: {
-  searchParams: { juego?: string };
+  searchParams: Promise<{ juego?: string }>;
 }) {
+  const { juego } = await searchParams;
   const games = await prisma.game.findMany({ orderBy: { name: "asc" } });
 
   // El ranking cross-organizador es la pieza diferencial que definimos en
   // el Bloque 1: el rating de un jugador no vive adentro de un solo
   // torneo, se acumula entre todos los organizadores de la plataforma.
   const players = await prisma.playerProfile.findMany({
-    where: searchParams.juego
-      ? { registrations: { some: { tournament: { gameId: searchParams.juego } } } }
+    where: juego
+      ? { registrations: { some: { tournament: { gameId: juego } } } }
       : undefined,
     orderBy: { eloRating: "desc" },
     take: 50,
@@ -33,7 +34,7 @@ export default async function RankingPage({
         <Link
           href="/ranking"
           className={`rounded-full px-3 py-1 text-xs ${
-            !searchParams.juego ? "bg-primary text-white" : "bg-surface-1 text-secondary"
+            !juego ? "bg-primary text-white" : "bg-surface-1 text-secondary"
           }`}
         >
           Todos
@@ -43,7 +44,7 @@ export default async function RankingPage({
             key={g.id}
             href={`/ranking?juego=${g.id}`}
             className={`rounded-full px-3 py-1 text-xs ${
-              searchParams.juego === g.id ? "bg-primary text-white" : "bg-surface-1 text-secondary"
+              juego === g.id ? "bg-primary text-white" : "bg-surface-1 text-secondary"
             }`}
           >
             {g.name}

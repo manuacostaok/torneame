@@ -2,9 +2,10 @@ import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 
-export default async function PlayerProfilePage({ params }: { params: { id: string } }) {
+export default async function PlayerProfilePage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   const player = await prisma.playerProfile.findUnique({
-    where: { id: params.id },
+    where: { id },
     include: {
       user: { select: { name: true, avatarUrl: true } },
       achievements: { orderBy: { earnedAt: "desc" }, take: 12 },

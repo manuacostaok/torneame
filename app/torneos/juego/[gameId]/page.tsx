@@ -8,9 +8,10 @@ export const revalidate = 300;
 export async function generateMetadata({
   params,
 }: {
-  params: { gameId: string };
+  params: Promise<{ gameId: string }>;
 }): Promise<Metadata> {
-  const game = await prisma.game.findUnique({ where: { id: params.gameId } });
+  const { gameId } = await params;
+  const game = await prisma.game.findUnique({ where: { id: gameId } });
   if (!game) return {};
 
   const title = `Torneos de ${game.name} — Torneame`;
@@ -26,8 +27,13 @@ export async function generateMetadata({
 // Esta página es a propósito indexable y liviana en JS (sin fondo
 // animado, sin nada interactivo pesado): el objetivo es rankear en
 // Google para "torneos de [juego]", no impresionar con la demo.
-export default async function GameLandingPage({ params }: { params: { gameId: string } }) {
-  const game = await prisma.game.findUnique({ where: { id: params.gameId } });
+export default async function GameLandingPage({
+  params,
+}: {
+  params: Promise<{ gameId: string }>;
+}) {
+  const { gameId } = await params;
+  const game = await prisma.game.findUnique({ where: { id: gameId } });
   if (!game) notFound();
 
   const tournaments = await prisma.tournament.findMany({

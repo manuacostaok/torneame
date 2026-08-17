@@ -3,9 +3,10 @@ import { notFound } from "next/navigation";
 import { BracketView } from "@/app/torneos/[slug]/BracketView";
 import Link from "next/link";
 
-export default async function FriendTournamentPage({ params }: { params: { id: string } }) {
+export default async function FriendTournamentPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   const friendTournament = await prisma.friendTournament.findUnique({
-    where: { id: params.id },
+    where: { id },
     include: { game: true },
   });
 

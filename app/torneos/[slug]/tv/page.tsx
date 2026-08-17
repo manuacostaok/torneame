@@ -4,9 +4,10 @@ import { BracketStructure } from "@/lib/brackets/types";
 
 export const revalidate = 10; // el venue necesita que esto se sienta "en vivo"
 
-export default async function TvBracketPage({ params }: { params: { slug: string } }) {
+export default async function TvBracketPage({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params;
   const tournament = await prisma.tournament.findUnique({
-    where: { id: params.slug },
+    where: { id: slug },
     include: { bracket: true, game: true },
   });
 

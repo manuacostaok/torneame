@@ -5,9 +5,10 @@ import { FollowButton } from "./FollowButton";
 import { BuyProductButton } from "./BuyProductButton";
 import Link from "next/link";
 
-export default async function OrganizerProfilePage({ params }: { params: { slug: string } }) {
+export default async function OrganizerProfilePage({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params;
   const organizer = await prisma.organizerProfile.findUnique({
-    where: { slug: params.slug },
+    where: { slug },
     include: {
       tournaments: {
         where: { status: { in: ["REGISTRATION_OPEN", "IN_PROGRESS", "FINISHED"] } },

@@ -2,9 +2,10 @@ import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 
-export default async function NetworkPage({ params }: { params: { slug: string } }) {
+export default async function NetworkPage({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params;
   const network = await prisma.network.findUnique({
-    where: { slug: params.slug },
+    where: { slug },
     include: {
       organizers: {
         include: { _count: { select: { followers: true, tournaments: true } } },
