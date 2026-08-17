@@ -1,0 +1,43 @@
+@import url("https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Space+Grotesk:wght@500&family=Inter:wght@400;500&display=swap");
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --surface-0: #0b0e14;
+  --surface-1: #151a23;
+  --surface-2: #1c222d;
+  --text-primary: #f5f6fa;
+  --text-secondary: #8a93a6;
+  --text-muted: #5f6673;
+  --text-accent: #a597ff;
+  --border-strong: #2a3140;
+  --primary: #7c5cfc;
+  --accent: #7c5cfc;
+  --font-heading: "Space Grotesk", "Inter", system-ui, sans-serif;
+  /* Fuente pixel de arcade retro, para el título del login y el logo —
+     el resto de la UI se queda en Inter/Space Grotesk, que siguen siendo
+     mucho más legibles para texto largo (stats, comentarios, formularios) */
+  --font-pixel: "Press Start 2P", "Space Grotesk", monospace;
+}
+
+body {
+  background: var(--surface-0);
+  color: var(--text-primary);
+  font-family: "Inter", system-ui, sans-serif;
+}
+
+h1,
+h2,
+h3 {
+  font-family: "Space Grotesk", "Inter", system-ui, sans-serif;
+}
+
+/* Fondo animado — respeta prefers-reduced-motion, congela el movimiento
+   sin ocultar los elementos (siguen ahí como decoración estática) */
+@media (prefers-reduced-motion: reduce) {
+  .motion-safe\:animate-float-1,
+  .motion-safe\:animate-float-2 {
+    animation: none !important;
+  }
+}

@@ -1,0 +1,33 @@
+import "./globals.css";
+import { ToastProvider } from "./components/Toast";
+import { ServiceWorkerRegister } from "./components/ServiceWorkerRegister";
+import { InstallAppBanner } from "./components/InstallAppBanner";
+
+export const metadata = {
+  title: "Torneame",
+  description: "Tu torneo, sin el quilombo.",
+  manifest: "/manifest.webmanifest",
+  icons: {
+    icon: [{ url: "/icon-192.png", sizes: "192x192", type: "image/png" }],
+    apple: [{ url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],
+  },
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "Torneame",
+  },
+};
+
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <html lang="es">
+      <body>
+        <ToastProvider>
+          <ServiceWorkerRegister />
+          {children}
+          <InstallAppBanner />
+        </ToastProvider>
+      </body>
+    </html>
+  );
+}
