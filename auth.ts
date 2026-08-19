@@ -27,14 +27,21 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     }),
   ],
   callbacks: {
-    // Se inyecta el rol en el JWT y en la sesión para poder proteger
-    // rutas de organizador/admin sin pegarle a la base de datos en cada request
+    // Se inyecta el id y el rol en el JWT y en la sesión para poder
+    // proteger rutas de organizador/admin y filtrar por dueño sin
+    // pegarle a la base de datos en cada request
     async jwt({ token, user }) {
-      if (user) token.role = (user as { role: string }).role;
+      if (user) {
+        token.id = user.id;
+        token.role = (user as { role: string }).role;
+      }
       return token;
     },
     async session({ session, token }) {
-      if (session.user) session.user.role = token.role as string;
+      if (session.user) {
+        session.user.id = token.id as string;
+        session.user.role = token.role as string;
+      }
       return session;
     },
   },

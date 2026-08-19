@@ -16,7 +16,7 @@ const COMMISSION_RATE = 0.07;
  * (confirmPayment), nunca se marca como pagado desde el cliente.
  */
 export async function registerForTournament(tournamentId: string) {
-  assertSameOrigin();
+  await assertSameOrigin();
   const session = await auth();
   if (!session?.user) throw new Error("Necesitás iniciar sesión para inscribirte");
 

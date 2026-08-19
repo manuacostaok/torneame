@@ -14,31 +14,19 @@ import { revalidatePath } from "next/cache";
 export async function checkInRegistration(registrationId: string) {
   const session = await requireRole(["ORGANIZER", "ADMIN"]);
 
-  if (!session.user) {
-    throw new Error("Sesión no válida");
-  }
-
   const registration = await prisma.registration.findUnique({
     where: { id: registrationId },
-    include: {
-      tournament: { include: { organizer: true } },
-      player: { include: { user: true } },
-    },
+    include: { tournament: { include: { organizer: true } }, player: { include: { user: true } } },
   });
-
-  if (!registration) {
-    throw new Error("Inscripción no encontrada");
-  }
-
+  if (!registration) throw new Error("Inscripción no encontrada");
   if (
     registration.tournament.organizer.userId !== session.user.id &&
     session.user.role !== "ADMIN"
   ) {
     throw new Error("Este torneo no te pertenece");
   }
-
   if (registration.checkedInAt) {
-    return registration;
+    return registration; // ya estaba, evitamos pisar la hora original
   }
 
   const updated = await prisma.registration.update({
@@ -47,9 +35,5 @@ export async function checkInRegistration(registrationId: string) {
   });
 
   revalidatePath(`/torneos/${registration.tournamentId}`);
-
-  return {
-    ...updated,
-    playerName: registration.player.user.name,
-  };
+  return { ...updated, playerName: registration.player.user.name };
 }

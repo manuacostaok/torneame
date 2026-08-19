@@ -131,3 +131,10 @@ Nunca habían existido `tailwind.config.js`, `postcss.config.js` ni `tsconfig.js
 Se crearon los 3 archivos, mapeando con precisión (revisando con grep qué clases se usan de verdad en el código, no una lista genérica) cada token de color a su variable CSS correspondiente en `globals.css`. También se corrigió `bg-primary/10` y `bg-accent/30` (con modificador de opacidad), que necesitan el color declarado como tripleta RGB (`--primary-rgb: 124 92 252`) en vez de hexadecimal para que Tailwind pueda aplicarles opacidad correctamente.
 
 También se corrigió `app/manifest.ts`: el sistema de metadata dinámica de Next.js rompía en Windows si la ruta del proyecto tenía un apóstrofo (ej. una carpeta de usuario tipo `Users\Nombre' PC\`). Se reemplazó por un `public/manifest.webmanifest` estático, que no depende de ese loader y funciona igual en cualquier entorno.
+
+## Segunda auditoría — 3 bugs más, mismo patrón (rompían solo en el build real)
+
+- **`headers()` sin `await`** en `lib/security.ts` (`assertSameOrigin`, la capa de CSRF) — Next.js 15 también volvió asíncrona esta función, igual que hizo con `params`. Se corrigió la función y los 6 lugares donde se llama.
+- **`session.user.role`/`.id` sin tipos declarados** — se usan en 33 lugares del proyecto pero nunca existió el archivo de declaración que le dice a TypeScript que esos campos existen en la sesión de NextAuth. Se agregó `types/next-auth.d.ts`.
+- **`session.user.id` nunca se copiaba del JWT a la sesión** (bug de funcionamiento, no de compilación — esto iba a compilar bien pero fallar en producción con `id` siempre `undefined`). Corregido en `auth.ts`.
+- Se agregó `.eslintrc.json` (no existía) y se re-verificó todo el proyecto con una batería de 7 chequeos automáticos: JSON válidos, configs de JS cargan, schema de Prisma balanceado, imports resueltos, sin sintaxis vieja de `params`, `headers()`/`cookies()` siempre con `await`, `assertSameOrigin()` siempre con `await`.

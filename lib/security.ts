@@ -10,8 +10,8 @@ import { headers } from "next/headers";
  * config de Next o el deploy corre detrás de un proxy raro, esto no
  * depende de que el framework lo siga haciendo bien solo.
  */
-export function assertSameOrigin() {
-  const headerList = headers();
+export async function assertSameOrigin() {
+  const headerList = await headers();
   const origin = headerList.get("origin");
   const allowedOrigin = process.env.APP_URL;
 

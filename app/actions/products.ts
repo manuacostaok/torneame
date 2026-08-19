@@ -16,7 +16,7 @@ const productSchema = z.object({
 });
 
 export async function createProduct(input: z.infer<typeof productSchema>) {
-  assertSameOrigin();
+  await assertSameOrigin();
   const session = await requireRole(["ORGANIZER", "ADMIN"]);
   const data = productSchema.parse(input);
 
@@ -35,7 +35,7 @@ export async function createProduct(input: z.infer<typeof productSchema>) {
  * caso de uso, no una integración nueva desde cero.
  */
 export async function buyProduct(productId: string) {
-  assertSameOrigin();
+  await assertSameOrigin();
   const session = await auth();
   if (!session?.user) throw new Error("Necesitás iniciar sesión para comprar");
 

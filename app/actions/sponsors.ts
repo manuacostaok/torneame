@@ -15,7 +15,7 @@ const sponsorSchema = z.object({
 });
 
 export async function addSponsor(input: z.infer<typeof sponsorSchema>) {
-  assertSameOrigin();
+  await assertSameOrigin();
   const session = await requireRole(["ORGANIZER", "ADMIN"]);
   const data = sponsorSchema.parse(input);
 

@@ -20,7 +20,7 @@ const PRO_MONTHLY_PRICE_ARS = 12000;
  * confirma Mercado Pago del lado del servidor.
  */
 export async function startProSubscription() {
-  assertSameOrigin();
+  await assertSameOrigin();
   const session = await requireRole(["ORGANIZER"]);
 
   const organizer = await prisma.organizerProfile.findUnique({
