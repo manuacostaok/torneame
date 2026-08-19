@@ -45,6 +45,15 @@ export default async function TournamentPage({ params }: { params: Promise<{ slu
 
       <div className="mx-auto max-w-3xl">
         {/* Encabezado del torneo — reemplaza al flyer de Canva */}
+        {tournament.bannerImageUrl && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={tournament.bannerImageUrl}
+            alt={tournament.name}
+            className="mb-4 aspect-video w-full rounded-xl object-cover"
+          />
+        )}
+
         <div className="rounded-xl bg-surface-1 p-5">
           <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
             <div className="min-w-0">

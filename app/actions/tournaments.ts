@@ -11,6 +11,7 @@ const createTournamentSchema = z.object({
   gameId: z.string(),
   name: z.string().min(3, "El nombre necesita al menos 3 caracteres"),
   description: z.string().optional(),
+  bannerImageUrl: z.string().url().optional(),
   format: z.enum(["SINGLE_ELIMINATION", "DOUBLE_ELIMINATION", "ROUND_ROBIN", "LEAGUE", "GROUPS"]),
   mode: z.string().min(1),
   entryFee: z.number().min(0),

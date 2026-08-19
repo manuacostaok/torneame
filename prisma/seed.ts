@@ -72,6 +72,7 @@ async function main() {
       gameId: mk9.id,
       name: "Torneo Nacional Argentino",
       description: "FT2 con looser bracket. Gran final FT3.",
+      bannerImageUrl: "https://picsum.photos/seed/torneame-mk9/800/450",
       format: "SINGLE_ELIMINATION",
       mode: "1v1",
       entryFee: 15000,
@@ -129,6 +130,18 @@ async function main() {
       authorId: (await prisma.user.findFirst({ where: { email: "facu_gg@torneame.demo" } }))!
         .id,
       body: "¿A qué hora arrancan las inscripciones en el lugar?",
+    },
+  });
+
+  // Usuario admin de prueba, para poder entrar al panel de /admin apenas
+  // se levanta el proyecto — sin esto no había con qué probarlo.
+  const adminPasswordHash = await hash("demo1234", 10);
+  await prisma.user.create({
+    data: {
+      email: "admin@torneame.demo",
+      name: "Admin",
+      role: "ADMIN",
+      passwordHash: adminPasswordHash,
     },
   });
 

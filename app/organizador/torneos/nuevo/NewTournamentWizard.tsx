@@ -20,6 +20,7 @@ interface FormState {
   gameId: string;
   name: string;
   description: string;
+  bannerImageUrl: string;
   format: "SINGLE_ELIMINATION" | "DOUBLE_ELIMINATION" | "ROUND_ROBIN" | "LEAGUE" | "GROUPS";
   mode: string;
   entryFee: string;
@@ -35,6 +36,7 @@ const initialState: FormState = {
   gameId: "",
   name: "",
   description: "",
+  bannerImageUrl: "",
   format: "SINGLE_ELIMINATION",
   mode: "1v1",
   entryFee: "0",
@@ -93,6 +95,7 @@ export function NewTournamentWizard({ games }: { games: Game[] }) {
           gameId: form.gameId,
           name: form.name,
           description: form.description || undefined,
+          bannerImageUrl: form.bannerImageUrl || undefined,
           format: form.format,
           mode: form.mode,
           entryFee: Number(form.entryFee),
@@ -156,6 +159,18 @@ export function NewTournamentWizard({ games }: { games: Game[] }) {
             className="rounded-md border border-strong px-3 py-2 text-sm"
             rows={3}
           />
+          <div>
+            <input
+              value={form.bannerImageUrl}
+              onChange={(e) => update("bannerImageUrl", e.target.value)}
+              placeholder="URL de la imagen/flyer del torneo (opcional)"
+              className="w-full rounded-md border border-strong px-3 py-2 text-sm"
+            />
+            <p className="mt-1 text-xs text-muted">
+              Subí la imagen a donde prefieras (Imgur, Drive público, etc.) y pegá el link acá —
+              todavía no subimos archivos directo desde acá.
+            </p>
+          </div>
         </div>
       )}
 

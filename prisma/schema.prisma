@@ -108,6 +108,7 @@ model OrganizerProfile {
   products     Product[]
   networkId    String?
   network      Network?      @relation(fields: [networkId], references: [id])
+  createdAt    DateTime      @default(now())
 
   tournaments Tournament[]
   followers   Follow[]     @relation("FollowedOrganizer")
@@ -140,6 +141,7 @@ model Tournament {
   game                  Game                   @relation(fields: [gameId], references: [id])
   name                  String
   description           String?
+  bannerImageUrl        String? // el flyer/banner del torneo — lo que reemplaza al post de Instagram
   format                TournamentFormat
   mode                  String // ej: "1v1", "2v2", "3v3 vale todo" — texto libre, ver justificación en Bloque 3
   entryFee              Decimal                @default(0)

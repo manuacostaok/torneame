@@ -22,9 +22,7 @@ const PRO_MONTHLY_PRICE_ARS = 12000;
 export async function startProSubscription() {
   await assertSameOrigin();
   const session = await requireRole(["ORGANIZER"]);
-  if (!session?.user?.email){
-    throw new Error ("El usuario no tiene mail asociado");
-  }
+
   const organizer = await prisma.organizerProfile.findUnique({
     where: { userId: session.user.id },
   });

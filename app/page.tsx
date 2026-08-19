@@ -83,8 +83,21 @@ export default async function LandingPage() {
           <Link
             href={`/torneos/${t.id}`}
             key={t.id}
-            className="rounded-xl bg-surface-1 p-4 transition hover:bg-surface-2"
+            className="overflow-hidden rounded-xl bg-surface-1 transition hover:bg-surface-2"
           >
+            {t.bannerImageUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={t.bannerImageUrl}
+                alt={t.name}
+                className="aspect-video w-full object-cover"
+              />
+            ) : (
+              <div className="flex aspect-video w-full items-center justify-center bg-surface-2 text-sm text-muted">
+                {t.game.name}
+              </div>
+            )}
+            <div className="p-4">
             <div className="flex items-start justify-between">
               <span className="text-sm text-secondary">{t.game.name}</span>
               <span
@@ -104,6 +117,7 @@ export default async function LandingPage() {
             <p className="mt-2 font-medium text-[var(--text-warning)]">
               ${Number(t.prizePoolBase).toLocaleString("es-AR")} en premios
             </p>
+            </div>
           </Link>
         ))}
         {upcomingTournaments.length === 0 && (

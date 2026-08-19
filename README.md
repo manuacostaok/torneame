@@ -138,3 +138,18 @@ También se corrigió `app/manifest.ts`: el sistema de metadata dinámica de Nex
 - **`session.user.role`/`.id` sin tipos declarados** — se usan en 33 lugares del proyecto pero nunca existió el archivo de declaración que le dice a TypeScript que esos campos existen en la sesión de NextAuth. Se agregó `types/next-auth.d.ts`.
 - **`session.user.id` nunca se copiaba del JWT a la sesión** (bug de funcionamiento, no de compilación — esto iba a compilar bien pero fallar en producción con `id` siempre `undefined`). Corregido en `auth.ts`.
 - Se agregó `.eslintrc.json` (no existía) y se re-verificó todo el proyecto con una batería de 7 chequeos automáticos: JSON válidos, configs de JS cargan, schema de Prisma balanceado, imports resueltos, sin sintaxis vieja de `params`, `headers()`/`cookies()` siempre con `await`, `assertSameOrigin()` siempre con `await`.
+
+## Tercera vuelta — el flujo de punta a punta tenía huecos reales
+
+El nav de la landing linkeaba a páginas que nunca se habían construido. Se encontraron y armaron:
+
+- **`/registro`** — no existía ninguna pantalla, aunque la función `registerUser` y los links del nav ya apuntaban ahí. Incluye auto-login después de crear la cuenta.
+- **`/organizador/perfil/nuevo`** y **`/jugador/perfil/nuevo`** — el segundo paso del alta (completar el perfil) tampoco existía.
+- **`/torneos`** — el listado público de TODOS los torneos (visible para cualquiera, no solo usuarios logueados) no existía. Ahora muestra la imagen de cada torneo.
+- **`/organizadores`** — listado público de todos los organizadores, tampoco existía.
+- **`/admin`** — el panel de administrador no existía del todo. Ahora tiene: stats generales (jugadores, organizadores, recaudación, comisión), lista de organizadores con botón para dar/sacar el plan PRO a mano (separado del flujo pago real de Mercado Pago, para cortesías o casos especiales), y los últimos 30 pagos aprobados de toda la plataforma.
+- **Las imágenes de los torneos**: el modelo `Tournament` nunca tuvo un campo para esto. Se agregó `bannerImageUrl`, se conectó en el wizard de creación (por ahora se pega un link, no se sube el archivo directo — ver nota abajo), y se muestra en la landing, en `/torneos` y en la página individual del torneo. Si no hay imagen cargada, se muestra un bloque con el nombre del juego en vez de un hueco vacío.
+- Se agregó un usuario **admin de prueba** al seed (`admin@torneame.demo` / `demo1234`), porque no había forma de probar el panel nuevo sin esto.
+- Se corrigió sobre la marcha un parche feo que yo mismo había escrito (un `.catch()` con `as never` para esquivar que `OrganizerProfile` no tenía `createdAt`) — se agregó el campo de verdad al schema en vez de esquivar el problema.
+
+**Lo que queda pendiente y no quiero pasar por alto**: la carga de imágenes hoy es pegar un link (Imgur, Drive público, etc.), no subir el archivo directo desde la plataforma. Subir archivos de verdad necesita un servicio de storage (S3, Cloudinary, uploadthing) con credenciales propias — es una pieza de infraestructura real, no algo que tenga sentido improvisar sin esas credenciales.
