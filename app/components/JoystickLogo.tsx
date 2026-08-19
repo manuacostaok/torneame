@@ -14,15 +14,17 @@
 
 const OUTLINE_LENGTH = 380;
 
-export function JoystickLogo({
-  progress = 1,
-  size = 48,
-  className = "",
-}: {
-  progress?: number;
-  size?: number;
-  className?: string;
-}) {
+  export function JoystickLogo({
+    progress = 0,
+    size = 40,
+    className = "",
+    style,
+  }: {
+    progress?: number;
+    size?: number;
+    className?: string;
+    style?: React.CSSProperties;
+  }) {
   const clamped = Math.min(Math.max(progress, 0), 1);
   const dashoffset = OUTLINE_LENGTH * (1 - clamped);
   const detailsOpacity = clamped > 0.75 ? (clamped - 0.75) / 0.25 : 0;
@@ -36,6 +38,7 @@ export function JoystickLogo({
       className={className}
       role="img"
       aria-label="Torneame"
+      style={style}
     >
       <path
         d="M 30 24
