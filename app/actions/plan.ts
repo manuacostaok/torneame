@@ -22,7 +22,9 @@ const PRO_MONTHLY_PRICE_ARS = 12000;
 export async function startProSubscription() {
   await assertSameOrigin();
   const session = await requireRole(["ORGANIZER"]);
-
+  if (!session?.user?.email){
+    throw new Error ("El usuario no tiene mail asociado");
+  }
   const organizer = await prisma.organizerProfile.findUnique({
     where: { userId: session.user.id },
   });
@@ -34,7 +36,7 @@ export async function startProSubscription() {
     body: {
       reason: "Torneame PRO — plan mensual",
       external_reference: organizer.id,
-      payer_email: session.user.email ?? undefined,
+      payer_email: session.user.email,
       auto_recurring: {
         frequency: 1,
         frequency_type: "months",
