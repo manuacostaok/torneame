@@ -119,3 +119,15 @@ Verificación hecha (sin poder correr `next build` real, por las limitaciones de
 - Se re-corrieron todas las validaciones de lógica del día (motor de brackets, premio dinámico, sorteo de equipos, sugerencias) y siguen dando los resultados esperados.
 
 Ver `DEPLOY.md` para la guía de deploy completa, sin necesitar terminal.
+
+## Corrección grave — faltaban 3 archivos de configuración fundamentales
+
+Nunca habían existido `tailwind.config.js`, `postcss.config.js` ni `tsconfig.json` en el repo. Esto significaba que:
+- **Tailwind nunca generó una sola clase de CSS real** — todo el sitio se veía sin estilos (sin fondo oscuro, sin espaciados, sin colores). Es la causa de "el diseño está mal" que reportaste.
+- Los tokens de color custom del proyecto (`bg-surface-1`, `text-secondary`, `text-accent`, `border-strong`, etc. — usados en prácticamente todos los componentes) nunca tuvieron una definición real detrás.
+- La animación del fondo (`animate-float-1`/`animate-float-2` en `AnimatedBackground.tsx`) tenía un comentario diciendo "agregar esto en tailwind.config.js" que nunca se pudo cumplir porque el archivo no existía — la animación estaba escrita pero nunca corría.
+- El alias `@/` que se usa en cientos de imports (`@/lib/prisma`, `@/app/...`) dependía de que Next.js lo adivinara solo sin `tsconfig.json`, lo cual no es confiable.
+
+Se crearon los 3 archivos, mapeando con precisión (revisando con grep qué clases se usan de verdad en el código, no una lista genérica) cada token de color a su variable CSS correspondiente en `globals.css`. También se corrigió `bg-primary/10` y `bg-accent/30` (con modificador de opacidad), que necesitan el color declarado como tripleta RGB (`--primary-rgb: 124 92 252`) en vez de hexadecimal para que Tailwind pueda aplicarles opacidad correctamente.
+
+También se corrigió `app/manifest.ts`: el sistema de metadata dinámica de Next.js rompía en Windows si la ruta del proyecto tenía un apóstrofo (ej. una carpeta de usuario tipo `Users\Nombre' PC\`). Se reemplazó por un `public/manifest.webmanifest` estático, que no depende de ese loader y funciona igual en cualquier entorno.

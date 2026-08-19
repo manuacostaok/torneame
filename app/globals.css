@@ -14,6 +14,12 @@
   --border-strong: #2a3140;
   --primary: #7c5cfc;
   --accent: #7c5cfc;
+  /* Mismo violeta que --primary/--accent, pero como tripleta RGB — hace
+     falta en este formato específico para que Tailwind pueda aplicarle
+     opacidad (bg-primary/10, bg-accent/30). Un color CSS tipo "#7c5cfc"
+     no se puede combinar con el modificador de opacidad de Tailwind,
+     tiene que venir como números separados por espacio. */
+  --primary-rgb: 124 92 252;
   --font-heading: "Space Grotesk", "Inter", system-ui, sans-serif;
   /* Fuente pixel de arcade retro, para el título del login y el logo —
      el resto de la UI se queda en Inter/Space Grotesk, que siguen siendo

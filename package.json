@@ -33,6 +33,7 @@
     "@types/node": "^22.7.0",
     "@types/bcryptjs": "^2.4.6",
     "@types/web-push": "^3.6.4",
+    "autoprefixer": "^10.4.20",
     "prisma": "^5.20.0",
     "tsx": "^4.19.1",
     "vitest": "^2.1.1",
