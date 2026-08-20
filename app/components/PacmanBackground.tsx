@@ -1,10 +1,13 @@
+import { PowerMushroomIcon, VersusIcon } from "./icons/GamerIcons";
+
 // Fondo estilo arcade — reemplazó al viejo fondo de círculos difuminados.
 // Todo CSS/SVG puro (sin canvas, sin JS en el hilo principal), respeta
 // prefers-reduced-motion. A propósito, todo son siluetas GENÉRICAS del
 // género (un comegalletas amarillo, fantasmitas, un corredor veloz, cajas
-// de consola, joysticks de distinta pinta) — ninguna reproduce el diseño
-// protegido de un personaje o consola puntual, mismo criterio que ya usa
-// el proyecto en JoystickLogo.tsx y GalaxianBackground.tsx.
+// de consola, joysticks de distinta pinta, un power-up, un versus de
+// pelea) — ninguna reproduce el diseño protegido de un personaje o
+// consola puntual, mismo criterio que ya usa el proyecto en
+// JoystickLogo.tsx y GalaxianBackground.tsx.
 
 // Carril "de caza": un comegalletas con 3 fantasmas seudo-persiguiéndolo
 // (mismo recorrido, delays negativos escalonados para que se vean en fila).
@@ -54,6 +57,14 @@ const GAMER_ICONS: {
   {
     Icon: PadControllerIcon,
     style: { top: "50%", right: "3%", width: 30, opacity: 0.1, animationDuration: "8s" },
+  },
+  {
+    Icon: PowerMushroomIcon,
+    style: { top: "34%", left: "6%", width: 26, opacity: 0.14, animationDuration: "7.2s" },
+  },
+  {
+    Icon: VersusIcon,
+    style: { top: "56%", right: "8%", width: 44, opacity: 0.12, animationDuration: "9.5s" },
   },
 ];
 

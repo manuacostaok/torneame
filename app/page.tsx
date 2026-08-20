@@ -11,6 +11,7 @@ import { FAQ } from "./components/FAQ";
 import { Footer } from "./components/Footer";
 import { JoystickLogo } from "./components/JoystickLogo";
 import { NavAuthCTA } from "./components/NavAuthCTA";
+import { FriendsModePromo } from "./components/FriendsModePromo";
 import Link from "next/link";
 
 export const revalidate = 60;
@@ -80,9 +81,6 @@ export default async function LandingPage() {
               Quiero organizar
             </Link>
           </div>
-          <Link href="/amigos/nuevo" className="mt-3 inline-block text-sm text-accent">
-            ¿Es solo entre amigos? Sorteá equipos gratis, sin cuenta →
-          </Link>
         </div>
       </section>
 
@@ -90,6 +88,8 @@ export default async function LandingPage() {
       <section className="mx-auto max-w-xs px-4 pb-10">
         <BracketDemo />
       </section>
+
+      <FriendsModePromo />
 
       {/* Torneos en la plataforma — de cualquier organizador, no solo
           demo. Título grande a propósito: es la prueba social de que la
