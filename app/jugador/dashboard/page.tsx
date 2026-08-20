@@ -22,6 +22,11 @@ export default async function PlayerDashboard() {
 
   if (!playerProfile) redirect("/jugador/perfil/nuevo");
 
+  const organizerProfile = await prisma.organizerProfile.findUnique({
+    where: { userId: session.user.id },
+    select: { id: true },
+  });
+
   const upcoming = playerProfile.registrations.filter((r) =>
     ["REGISTRATION_OPEN", "PUBLISHED"].includes(r.tournament.status)
   );
@@ -61,12 +66,25 @@ export default async function PlayerDashboard() {
               <PushNotificationOptIn />
             </div>
           </div>
-          <Link
-            href="/torneos"
-            className="flex-shrink-0 rounded-md bg-primary px-4 py-2 text-sm text-white"
-          >
-            Buscar torneos
-          </Link>
+          <div className="flex flex-shrink-0 flex-col items-end gap-2">
+            <Link
+              href="/torneos"
+              className="rounded-md bg-primary px-4 py-2 text-sm text-white"
+            >
+              Buscar torneos
+            </Link>
+            <div className="flex gap-3 text-xs">
+              <Link
+                href={organizerProfile ? "/organizador/dashboard" : "/organizador/perfil/nuevo"}
+                className="text-accent"
+              >
+                {organizerProfile ? "Mi panel de organizador" : "Crear torneo"}
+              </Link>
+              <Link href="/perfil" className="text-secondary">
+                Mi perfil
+              </Link>
+            </div>
+          </div>
         </div>
 
         {notifications.length > 0 && (

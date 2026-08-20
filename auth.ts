@@ -30,10 +30,16 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     // Se inyecta el id y el rol en el JWT y en la sesión para poder
     // proteger rutas de organizador/admin y filtrar por dueño sin
     // pegarle a la base de datos en cada request
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger, session }) {
       if (user) {
         token.id = user.id;
         token.role = (user as { role: string }).role;
+      }
+      // Se dispara con el `update()` de useSession() del lado del cliente —
+      // lo usamos cuando un jugador se convierte en organizador, para que
+      // el rol nuevo valga en el resto de la sesión sin pedirle reloguear.
+      if (trigger === "update" && session?.role) {
+        token.role = session.role;
       }
       return token;
     },

@@ -1,17 +1,26 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { signIn } from "next-auth/react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { LoginModal } from "@/app/components/LoginModal";
 import { useToast } from "@/app/components/Toast";
 
 export default function LoginPage() {
+  return (
+    <Suspense>
+      <LoginForm />
+    </Suspense>
+  );
+}
+
+function LoginForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const toast = useToast();
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -25,7 +34,7 @@ export default function LoginPage() {
       return;
     }
     toast("¡Bienvenido de nuevo!", "success");
-    router.push("/");
+    router.push(searchParams.get("redirect") || "/");
   }
 
   return (
@@ -58,10 +67,3 @@ export default function LoginPage() {
     </LoginModal>
   );
 }
-
-/*
- * Nota: next-auth necesita <SessionProvider> envolviendo la app para que
- * signIn()/useSession() funcionen del lado del cliente. Se agrega en
- * app/providers.tsx cuando conectemos el resto del flujo de auth — queda
- * anotado acá para no perderlo.
- */

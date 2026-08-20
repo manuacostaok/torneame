@@ -2,6 +2,7 @@ import "./globals.css";
 import { ToastProvider } from "./components/Toast";
 import { ServiceWorkerRegister } from "./components/ServiceWorkerRegister";
 import { InstallAppBanner } from "./components/InstallAppBanner";
+import { Providers } from "./providers";
 
 export const metadata = {
   title: "Torneame",
@@ -22,11 +23,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="es">
       <body>
-        <ToastProvider>
-          <ServiceWorkerRegister />
-          {children}
-          <InstallAppBanner />
-        </ToastProvider>
+        <Providers>
+          <ToastProvider>
+            <ServiceWorkerRegister />
+            {children}
+            <InstallAppBanner />
+          </ToastProvider>
+        </Providers>
       </body>
     </html>
   );

@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
+import { JoinByCodeBox } from "./JoinByCodeBox";
 
 export const revalidate = 60;
 
@@ -14,6 +15,7 @@ export default async function TournamentsListPage({
   const tournaments = await prisma.tournament.findMany({
     where: {
       status: { in: ["REGISTRATION_OPEN", "IN_PROGRESS", "FINISHED"] },
+      visibility: "PUBLIC", // los torneos privados no se listan acá — se buscan por código
       ...(juego ? { gameId: juego } : {}),
     },
     include: { game: true, organizer: true, _count: { select: { registrations: true } } },
@@ -27,6 +29,8 @@ export default async function TournamentsListPage({
       <p className="mt-1 text-sm text-secondary">
         Todo lo que se está jugando en Torneame, sea o no tu cuenta.
       </p>
+
+      <JoinByCodeBox />
 
       <div className="mt-4 flex flex-wrap gap-2">
         <Link

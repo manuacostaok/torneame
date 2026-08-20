@@ -91,11 +91,17 @@ const organizerProfileSchema = z.object({
  * solo crea el User, porque pedirle orgName/slug/bio en el mismo
  * formulario que el email/contraseña es fricción de más para alguien que
  * todavía no decidió cómo se va a llamar su marca.
+ *
+ * Cualquier usuario logueado puede pasar por acá, no solo los que se
+ * registraron como ORGANIZER — es como un jugador se convierte en
+ * organizador sin perder su cuenta ni su perfil de jugador (un User puede
+ * tener PlayerProfile y OrganizerProfile a la vez). Si todavía tiene rol
+ * PLAYER, lo promovemos acá; el cliente refresca la sesión con
+ * useSession().update() para que el rol nuevo valga sin tener que reloguear.
  */
 export async function createOrganizerProfile(input: z.infer<typeof organizerProfileSchema>) {
   const session = await auth();
   if (!session?.user) throw new Error("Necesitás iniciar sesión");
-  if (session.user.role !== "ORGANIZER") throw new Error("Esta cuenta no es de organizador");
 
   const data = organizerProfileSchema.parse(input);
 
@@ -105,7 +111,31 @@ export async function createOrganizerProfile(input: z.infer<typeof organizerProf
   const slugTaken = await prisma.organizerProfile.findUnique({ where: { slug: data.slug } });
   if (slugTaken) throw new Error("Ese nombre de usuario ya está en uso, probá otro");
 
-  return prisma.organizerProfile.create({
+  const profile = await prisma.organizerProfile.create({
     data: { userId: session.user.id, orgName: data.orgName, slug: data.slug, bio: data.bio },
+  });
+
+  if (session.user.role === "PLAYER") {
+    await prisma.user.update({ where: { id: session.user.id }, data: { role: "ORGANIZER" } });
+  }
+
+  return profile;
+}
+
+const updateProfileSchema = z.object({
+  name: z.string().trim().min(2).max(60),
+  avatarUrl: z.string().url().optional().or(z.literal("")),
+});
+
+/** Edita nombre y foto de perfil — el email no se puede tocar acá porque es la credencial de login. */
+export async function updateProfile(input: z.infer<typeof updateProfileSchema>) {
+  const session = await auth();
+  if (!session?.user) throw new Error("Necesitás iniciar sesión");
+
+  const data = updateProfileSchema.parse(input);
+
+  return prisma.user.update({
+    where: { id: session.user.id },
+    data: { name: data.name, avatarUrl: data.avatarUrl || null },
   });
 }

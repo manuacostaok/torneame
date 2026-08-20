@@ -31,6 +31,7 @@ export default async function TournamentPage({ params }: { params: Promise<{ slu
   if (!tournament) notFound();
 
   const session = await auth();
+  const isOwner = session?.user?.id === tournament.organizer.userId;
 
   const currentPrize = calculatePrizePool(
     Number(tournament.prizePoolBase),
@@ -44,6 +45,16 @@ export default async function TournamentPage({ params }: { params: Promise<{ slu
       <AnimatedBackground />
 
       <div className="mx-auto max-w-3xl">
+        {isOwner && tournament.visibility === "PRIVATE" && tournament.accessCode && (
+          <div className="mb-4 rounded-xl bg-surface-1 p-4 text-sm">
+            <p className="text-secondary">
+              Este torneo es privado — no aparece en /torneos. Compartí este código con quien
+              quieras invitar:
+            </p>
+            <p className="mt-2 text-2xl font-medium tracking-widest">{tournament.accessCode}</p>
+          </div>
+        )}
+
         {/* Encabezado del torneo — reemplaza al flyer de Canva */}
         {tournament.bannerImageUrl && (
           // eslint-disable-next-line @next/next/no-img-element

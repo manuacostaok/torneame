@@ -31,6 +31,7 @@ interface FormState {
   startsAt: string;
   registrationDeadline: string;
   maxPlayers: string;
+  visibility: "PUBLIC" | "PRIVATE";
 }
 
 const initialState: FormState = {
@@ -47,6 +48,7 @@ const initialState: FormState = {
   startsAt: "",
   registrationDeadline: "",
   maxPlayers: "16",
+  visibility: "PUBLIC",
 };
 
 export function NewTournamentWizard({ games }: { games: Game[] }) {
@@ -106,9 +108,15 @@ export function NewTournamentWizard({ games }: { games: Game[] }) {
           startsAt: new Date(form.startsAt),
           registrationDeadline: new Date(form.registrationDeadline),
           maxPlayers: Number(form.maxPlayers),
+          visibility: form.visibility,
         });
         router.push(`/torneos/${tournament.id}`);
-        toast("Torneo creado como borrador — publicalo cuando quieras", "success");
+        toast(
+          form.visibility === "PRIVATE"
+            ? "Torneo privado creado — el código para invitar gente está en la página del torneo"
+            : "Torneo creado como borrador — publicalo cuando quieras",
+          "success"
+        );
       } catch (err) {
         // El server action ya valida con zod y chequea el rol — acá solo
         // mostramos el mensaje, no repetimos la lógica de validación
@@ -266,6 +274,38 @@ export function NewTournamentWizard({ games }: { games: Game[] }) {
               className="mt-1 w-full rounded-md border border-strong px-3 py-2 text-sm"
             />
           </label>
+          <div>
+            <p className="text-sm text-secondary">Quién puede verlo</p>
+            <div className="mt-1 flex gap-2">
+              <button
+                type="button"
+                onClick={() => update("visibility", "PUBLIC")}
+                className={`flex-1 rounded-md border px-3 py-2 text-sm ${
+                  form.visibility === "PUBLIC"
+                    ? "border-primary bg-primary/10 text-accent"
+                    : "border-strong"
+                }`}
+              >
+                Público
+              </button>
+              <button
+                type="button"
+                onClick={() => update("visibility", "PRIVATE")}
+                className={`flex-1 rounded-md border px-3 py-2 text-sm ${
+                  form.visibility === "PRIVATE"
+                    ? "border-primary bg-primary/10 text-accent"
+                    : "border-strong"
+                }`}
+              >
+                Privado (con código)
+              </button>
+            </div>
+            <p className="mt-1 text-xs text-muted">
+              {form.visibility === "PUBLIC"
+                ? "Aparece listado en /torneos, cualquiera se puede inscribir."
+                : "No aparece listado en ningún lado — se genera un código que vos compartís con quien querés invitar."}
+            </p>
+          </div>
         </div>
       )}
 
@@ -278,6 +318,9 @@ export function NewTournamentWizard({ games }: { games: Game[] }) {
           <p className="mt-1 text-secondary">
             Cupo: {form.maxPlayers} &middot; Inscripción: ${form.entryFee || 0} &middot; Premio: $
             {form.prizePoolBase || 0}
+          </p>
+          <p className="mt-1 text-secondary">
+            {form.visibility === "PUBLIC" ? "Público" : "Privado — con código de acceso"}
           </p>
           <p className="mt-3 text-xs text-muted">
             Se crea como borrador. Lo publicás (y ahí se abren las

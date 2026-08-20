@@ -69,12 +69,17 @@ export default async function OrganizerDashboard() {
             <p className="text-sm text-secondary">Hola de nuevo</p>
             <h1 className="text-xl font-medium">{organizer.orgName}</h1>
           </div>
-          <Link
-            href="/organizador/torneos/nuevo"
-            className="rounded-md bg-primary px-4 py-2 text-sm text-white"
-          >
-            + Crear torneo
-          </Link>
+          <div className="flex flex-shrink-0 flex-col items-end gap-2">
+            <Link
+              href="/organizador/torneos/nuevo"
+              className="rounded-md bg-primary px-4 py-2 text-sm text-white"
+            >
+              + Crear torneo
+            </Link>
+            <Link href="/perfil" className="text-xs text-secondary">
+              Mi perfil
+            </Link>
+          </div>
         </div>
 
         <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-3">

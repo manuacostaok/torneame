@@ -34,6 +34,11 @@ enum TournamentLocationType {
   PRESENCIAL
 }
 
+enum TournamentVisibility {
+  PUBLIC
+  PRIVATE
+}
+
 enum TournamentStatus {
   DRAFT
   PUBLISHED
@@ -153,6 +158,8 @@ model Tournament {
   registrationDeadline  DateTime
   maxPlayers            Int
   status                TournamentStatus       @default(DRAFT)
+  visibility            TournamentVisibility   @default(PUBLIC)
+  accessCode            String?                @unique // solo para torneos PRIVATE — no aparecen en /torneos, se buscan con este código
   createdAt             DateTime               @default(now())
 
   registrations Registration[]

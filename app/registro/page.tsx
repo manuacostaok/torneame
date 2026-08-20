@@ -46,7 +46,7 @@ function RegisterForm() {
       }
 
       toast("¡Cuenta creada!", "success");
-      router.push(role === "ORGANIZER" ? "/organizador/perfil/nuevo" : "/");
+      router.push(role === "ORGANIZER" ? "/organizador/perfil/nuevo" : "/jugador/dashboard");
     } catch (err) {
       toast(err instanceof Error ? err.message : "No se pudo crear la cuenta", "error");
     } finally {

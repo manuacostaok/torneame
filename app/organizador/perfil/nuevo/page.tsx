@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 import { createOrganizerProfile } from "@/app/actions/auth";
 import { useToast } from "@/app/components/Toast";
 
@@ -12,6 +13,7 @@ export default function NewOrganizerProfilePage() {
   const [loading, setLoading] = useState(false);
   const toast = useToast();
   const router = useRouter();
+  const { update } = useSession();
 
   function handleOrgNameChange(value: string) {
     setOrgName(value);
@@ -32,6 +34,13 @@ export default function NewOrganizerProfilePage() {
     setLoading(true);
     try {
       await createOrganizerProfile({ orgName, slug, bio: bio || undefined });
+      // Si el usuario todavía era PLAYER, el server action ya lo promovió a
+      // ORGANIZER en la base — esto refresca el JWT de la sesión actual con
+      // el rol nuevo, para no tener que pedirle reloguear para poder crear
+      // torneos (el requireRole de createTournament chequea la sesión, no
+      // la base, así que sin este refresh seguiría bloqueado hasta el
+      // próximo login).
+      await update({ role: "ORGANIZER" });
       toast("¡Perfil de organizador listo!", "success");
       router.push("/organizador/dashboard");
     } catch (err) {
