@@ -10,6 +10,7 @@ import { Testimonials } from "./components/Testimonials";
 import { FAQ } from "./components/FAQ";
 import { Footer } from "./components/Footer";
 import { JoystickLogo } from "./components/JoystickLogo";
+import { NavAuthCTA } from "./components/NavAuthCTA";
 import Link from "next/link";
 
 export const revalidate = 60;
@@ -44,9 +45,7 @@ export default async function LandingPage() {
           <Link href="/ranking">Ranking</Link>
           <Link href="/organizadores">Organizadores</Link>
         </div>
-        <Link href="/registro" className="rounded-md bg-primary px-4 py-2 text-sm text-white">
-          Crear cuenta
-        </Link>
+        <NavAuthCTA />
       </nav>
 
       {/* Hero — mismo logo animado y fondo de naves que el login, para que

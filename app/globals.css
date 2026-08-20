@@ -132,10 +132,103 @@ h3 {
   background-repeat: repeat-x;
 }
 
+/* Laberinto de fondo — grilla de líneas finas, sugiere pasillos de
+   maze sin tener que dibujar un layout real (pesado, y no hace falta:
+   es decoración, no un tablero jugable). */
+.maze-grid {
+  position: absolute;
+  inset: 0;
+  opacity: 0.07;
+  background-image:
+    repeating-linear-gradient(
+      0deg,
+      var(--text-secondary) 0,
+      var(--text-secondary) 1px,
+      transparent 1px,
+      transparent 42px
+    ),
+    repeating-linear-gradient(
+      90deg,
+      var(--text-secondary) 0,
+      var(--text-secondary) 1px,
+      transparent 1px,
+      transparent 42px
+    );
+}
+
+/* Corredor veloz genérico — no un personaje puntual, una silueta redonda
+   con líneas de velocidad detrás, en azul (el color "de la velocidad" en
+   el imaginario arcade). Pasa rápido y poco seguido, como un cameo. */
+@keyframes runner-move {
+  from {
+    transform: translateX(-60px);
+  }
+  to {
+    transform: translateX(calc(100vw + 60px));
+  }
+}
+
+.runner-sprite {
+  position: absolute;
+  left: 0;
+  width: 22px;
+  height: 22px;
+  border-radius: 50% 50% 50% 20%;
+  background: #3b82f6;
+  animation: runner-move linear infinite;
+}
+
+.runner-sprite::before,
+.runner-sprite::after {
+  content: "";
+  position: absolute;
+  right: 100%;
+  height: 2px;
+  background: #3b82f6;
+  border-radius: 1px;
+}
+
+.runner-sprite::before {
+  top: 40%;
+  width: 16px;
+  margin-right: 3px;
+  opacity: 0.55;
+}
+
+.runner-sprite::after {
+  top: 65%;
+  width: 26px;
+  margin-right: 3px;
+  opacity: 0.3;
+}
+
+/* Íconos de consolas/joysticks dispersos — textura de fondo, siluetas
+   genéricas (sin logos ni formas exactas de ningún fabricante puntual,
+   mismo criterio que JoystickLogo.tsx), con un vaivén lento para que no
+   se sientan pegados/estáticos. */
+@keyframes icon-float {
+  0%,
+  100% {
+    transform: translateY(0) rotate(var(--icon-rot, 0deg));
+  }
+  50% {
+    transform: translateY(-10px) rotate(var(--icon-rot, 0deg));
+  }
+}
+
+.gamer-icon {
+  position: absolute;
+  animation: icon-float ease-in-out infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .pacman-sprite,
-  .ghost-sprite {
+  .ghost-sprite,
+  .runner-sprite {
     animation: none !important;
     left: 30%;
+  }
+  .gamer-icon {
+    animation: none !important;
   }
 }
