@@ -11,7 +11,10 @@ export default async function OrganizerProfilePage({ params }: { params: Promise
     where: { slug },
     include: {
       tournaments: {
-        where: { status: { in: ["REGISTRATION_OPEN", "IN_PROGRESS", "FINISHED"] } },
+        where: {
+          status: { in: ["REGISTRATION_OPEN", "IN_PROGRESS", "FINISHED"] },
+          visibility: "PUBLIC",
+        },
         include: { game: true, _count: { select: { registrations: true } } },
         orderBy: { startsAt: "desc" },
         take: 12,

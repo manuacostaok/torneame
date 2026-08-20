@@ -37,7 +37,11 @@ export default async function GameLandingPage({
   if (!game) notFound();
 
   const tournaments = await prisma.tournament.findMany({
-    where: { gameId: game.id, status: { in: ["REGISTRATION_OPEN", "IN_PROGRESS"] } },
+    where: {
+      gameId: game.id,
+      status: { in: ["REGISTRATION_OPEN", "IN_PROGRESS"] },
+      visibility: "PUBLIC",
+    },
     include: { organizer: true, _count: { select: { registrations: true } } },
     orderBy: { startsAt: "asc" },
   });

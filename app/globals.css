@@ -4,6 +4,14 @@
 @tailwind utilities;
 
 :root {
+  /* Sin esto, el navegador dibuja los controles nativos (inputs, selects,
+     el date/time picker, el autofill) con su tema claro por defecto —
+     fondo blanco — aunque toda la página sea oscura. El texto sí hereda
+     el color claro del tema (--text-primary), así que sin esta línea
+     queda texto claro sobre fondo claro: invisible. Esta declaración le
+     dice al navegador que pinte los controles nativos en oscuro. */
+  color-scheme: dark;
+
   --surface-0: #0b0e14;
   --surface-1: #151a23;
   --surface-2: #1c222d;

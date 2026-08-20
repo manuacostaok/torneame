@@ -17,7 +17,10 @@ export const revalidate = 60;
 export default async function LandingPage() {
   const [upcomingTournaments, games] = await Promise.all([
     prisma.tournament.findMany({
-      where: { status: { in: ["REGISTRATION_OPEN", "IN_PROGRESS"] } },
+      where: {
+        status: { in: ["REGISTRATION_OPEN", "IN_PROGRESS"] },
+        visibility: "PUBLIC", // los privados solo se encuentran con su código, no se muestran acá
+      },
       include: { game: true, _count: { select: { registrations: true } } },
       orderBy: { startsAt: "asc" },
       take: 6,
@@ -47,36 +50,41 @@ export default async function LandingPage() {
       </nav>
 
       {/* Hero — mismo logo animado y fondo de naves que el login, para que
-          el primer momento de marca sea consistente en toda la app */}
-      <section className="relative mx-auto max-w-2xl overflow-hidden px-4 py-10 text-center sm:py-16">
-        <GalaxianBackground className="opacity-70" />
+          el primer momento de marca sea consistente en toda la app. El
+          fondo va en un wrapper propio a todo el ancho (no metido adentro
+          del max-w-2xl del contenido) para que las naves se vean a tamaño
+          completo, no recortadas al ancho del texto. */}
+      <section className="relative overflow-hidden py-10 text-center sm:py-16">
+        <GalaxianBackground className="opacity-90" />
 
-        <AnimatedLogoLockup size={48} titleAs="p" />
+        <div className="relative mx-auto max-w-2xl px-4">
+          <AnimatedLogoLockup size={48} titleAs="p" />
 
-        <span className="mt-6 inline-block rounded-full bg-[var(--bg-danger)] px-3 py-1 text-xs text-[var(--text-danger)]">
-          {upcomingTournaments.filter((t) => t.status === "IN_PROGRESS").length} torneos en vivo ahora
-        </span>
-        <h1 className="mt-4 text-3xl font-medium leading-tight sm:text-5xl">
-          Tu torneo, sin el quilombo
-        </h1>
-        <p className="mt-3 text-base text-secondary sm:text-lg">
-          Armá el bracket, cobrá la inscripción y transmití resultados en vivo.
-          Sin WhatsApp, sin planillas.
-        </p>
-        <div className="mt-6 flex flex-col justify-center gap-3 sm:flex-row">
-          <Link href="/registro?rol=jugador" className="rounded-md bg-primary px-6 py-3 text-white">
-            Soy jugador
-          </Link>
-          <Link
-            href="/registro?rol=organizador"
-            className="rounded-md border border-strong px-6 py-3"
-          >
-            Quiero organizar
+          <span className="mt-6 inline-block rounded-full bg-[var(--bg-danger)] px-3 py-1 text-xs text-[var(--text-danger)]">
+            {upcomingTournaments.filter((t) => t.status === "IN_PROGRESS").length} torneos en vivo ahora
+          </span>
+          <h1 className="mt-4 text-3xl font-medium leading-tight sm:text-5xl">
+            Tu torneo, sin el quilombo
+          </h1>
+          <p className="mt-3 text-base text-secondary sm:text-lg">
+            Armá el bracket, cobrá la inscripción y transmití resultados en vivo.
+            Sin WhatsApp, sin planillas.
+          </p>
+          <div className="mt-6 flex flex-col justify-center gap-3 sm:flex-row">
+            <Link href="/registro?rol=jugador" className="rounded-md bg-primary px-6 py-3 text-white">
+              Soy jugador
+            </Link>
+            <Link
+              href="/registro?rol=organizador"
+              className="rounded-md border border-strong px-6 py-3"
+            >
+              Quiero organizar
+            </Link>
+          </div>
+          <Link href="/amigos/nuevo" className="mt-3 inline-block text-sm text-accent">
+            ¿Es solo entre amigos? Sorteá equipos gratis, sin cuenta →
           </Link>
         </div>
-        <Link href="/amigos/nuevo" className="mt-3 inline-block text-sm text-accent">
-          ¿Es solo entre amigos? Sorteá equipos gratis, sin cuenta →
-        </Link>
       </section>
 
       {/* Demo animada — el valor del producto sin necesidad de crear cuenta */}
@@ -84,8 +92,18 @@ export default async function LandingPage() {
         <BracketDemo />
       </section>
 
-      {/* Próximos torneos */}
-      <section className="mx-auto grid max-w-4xl grid-cols-1 gap-4 px-4 pb-14 sm:grid-cols-3">
+      {/* Torneos en la plataforma — de cualquier organizador, no solo
+          demo. Título grande a propósito: es la prueba social de que la
+          plataforma tiene actividad real, el primer lugar donde alguien
+          nuevo entiende que esto no es una landing vacía. */}
+      <section className="mx-auto max-w-4xl px-4 pb-4 text-center">
+        <h2 className="text-2xl font-medium sm:text-3xl">Mirá los torneos que se están armando</h2>
+        <p className="mt-2 text-sm text-secondary sm:text-base">
+          De cualquier organizador de la plataforma — anotate en el que quieras.
+        </p>
+      </section>
+
+      <section className="mx-auto grid max-w-4xl grid-cols-1 gap-4 px-4 pb-8 sm:grid-cols-3">
         {upcomingTournaments.map((t) => (
           <Link
             href={`/torneos/${t.id}`}
@@ -133,6 +151,14 @@ export default async function LandingPage() {
           </p>
         )}
       </section>
+
+      {upcomingTournaments.length > 0 && (
+        <div className="mx-auto max-w-4xl px-4 pb-14 text-center">
+          <Link href="/torneos" className="text-sm text-accent">
+            Ver todos los torneos →
+          </Link>
+        </div>
+      )}
 
       <HowItWorks />
       <GamesGrid games={games} />
