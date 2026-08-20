@@ -80,13 +80,20 @@ h3 {
   }
 }
 
+/* Tratamiento "juguete 3D": gradiente radial simulando una luz de arriba
+   a la izquierda + sombra interna del lado opuesto + sombra proyectada —
+   el mismo truco de siempre para que una forma plana lea como una esfera
+   con volumen, sin necesidad de un motor 3D real. */
 .pacman-sprite {
   position: absolute;
   left: 0;
   width: 26px;
   height: 26px;
   border-radius: 50%;
-  background: var(--text-warning);
+  background: radial-gradient(circle at 32% 28%, #fff3c4 0%, var(--text-warning) 42%, #d69a00 100%);
+  box-shadow:
+    inset -3px -3px 5px rgba(0, 0, 0, 0.3),
+    0 3px 6px rgba(0, 0, 0, 0.35);
   animation:
     pacman-chomp 0.35s linear infinite,
     pacman-move linear infinite;
@@ -98,6 +105,10 @@ h3 {
   width: 22px;
   height: 20px;
   border-radius: 11px 11px 3px 3px;
+  background-image: radial-gradient(circle at 32% 22%, rgba(255, 255, 255, 0.65), transparent 55%);
+  box-shadow:
+    inset -2px -2px 4px rgba(0, 0, 0, 0.25),
+    0 3px 5px rgba(0, 0, 0, 0.3);
   animation: pacman-move linear infinite;
 }
 
@@ -156,9 +167,9 @@ h3 {
     );
 }
 
-/* Corredor veloz genérico — no un personaje puntual, una silueta redonda
-   con líneas de velocidad detrás, en azul (el color "de la velocidad" en
-   el imaginario arcade). Pasa rápido y poco seguido, como un cameo. */
+/* Corredor veloz — criatura original (SpeedyCritterIcon), no un
+   personaje puntual, con líneas de velocidad detrás. Pasa rápido y poco
+   seguido, como un cameo. */
 @keyframes runner-move {
   from {
     transform: translateX(-60px);
@@ -171,11 +182,10 @@ h3 {
 .runner-sprite {
   position: absolute;
   left: 0;
-  width: 22px;
-  height: 22px;
-  border-radius: 50% 50% 50% 20%;
-  background: #3b82f6;
+  width: 40px;
+  height: 28px;
   animation: runner-move linear infinite;
+  filter: drop-shadow(0 3px 4px rgba(0, 0, 0, 0.4));
 }
 
 .runner-sprite::before,
@@ -219,6 +229,10 @@ h3 {
 .gamer-icon {
   position: absolute;
   animation: icon-float ease-in-out infinite;
+  /* Sombra proyectada consistente en los 8 íconos, sin repetirla adentro
+     de cada SVG — refuerza la sensación de "objeto con volumen flotando",
+     no una calcomanía plana. */
+  filter: drop-shadow(0 4px 5px rgba(0, 0, 0, 0.4));
 }
 
 @media (prefers-reduced-motion: reduce) {
