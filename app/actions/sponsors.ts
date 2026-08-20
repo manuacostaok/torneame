@@ -2,7 +2,7 @@
 
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
-import { requireRole } from "@/auth";
+import { requireRole, isAdmin } from "@/auth";
 import { revalidatePath } from "next/cache";
 import { assertSameOrigin } from "@/lib/security";
 
@@ -24,7 +24,7 @@ export async function addSponsor(input: z.infer<typeof sponsorSchema>) {
     include: { organizer: true },
   });
   if (!tournament) throw new Error("Torneo no encontrado");
-  if (tournament.organizer.userId !== session.user.id && session.user.role !== "ADMIN") {
+  if (tournament.organizer.userId !== session.user.id && !isAdmin(session.user.role)) {
     throw new Error("Este torneo no te pertenece");
   }
 
@@ -41,7 +41,7 @@ export async function removeSponsor(sponsorId: string) {
     include: { tournament: { include: { organizer: true } } },
   });
   if (!sponsor) return;
-  if (sponsor.tournament.organizer.userId !== session.user.id && session.user.role !== "ADMIN") {
+  if (sponsor.tournament.organizer.userId !== session.user.id && !isAdmin(session.user.role)) {
     throw new Error("Este torneo no te pertenece");
   }
 

@@ -2,7 +2,7 @@
 
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
-import { auth } from "@/auth";
+import { auth, isAdmin } from "@/auth";
 import { revalidatePath } from "next/cache";
 import { isRateLimited } from "@/lib/security";
 
@@ -43,7 +43,7 @@ export async function deleteComment(commentId: string) {
 
   const comment = await prisma.comment.findUnique({ where: { id: commentId } });
   if (!comment) throw new Error("Comentario no encontrado");
-  if (comment.authorId !== session.user.id && session.user.role !== "ADMIN") {
+  if (comment.authorId !== session.user.id && !isAdmin(session.user.role)) {
     throw new Error("No podés borrar un comentario que no es tuyo");
   }
 

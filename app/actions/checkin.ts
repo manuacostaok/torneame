@@ -1,7 +1,7 @@
 "use server";
 
 import { prisma } from "@/lib/prisma";
-import { requireRole } from "@/auth";
+import { requireRole, isAdmin } from "@/auth";
 import { revalidatePath } from "next/cache";
 
 /**
@@ -21,7 +21,7 @@ export async function checkInRegistration(registrationId: string) {
   if (!registration) throw new Error("Inscripción no encontrada");
   if (
     registration.tournament.organizer.userId !== session.user.id &&
-    session.user.role !== "ADMIN"
+    !isAdmin(session.user.role)
   ) {
     throw new Error("Este torneo no te pertenece");
   }

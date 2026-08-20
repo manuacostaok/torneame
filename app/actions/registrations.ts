@@ -2,7 +2,7 @@
 
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
-import { auth } from "@/auth";
+import { auth, isAdmin } from "@/auth";
 import { isRateLimited, assertSameOrigin } from "@/lib/security";
 
 const registerSchema = z.object({
@@ -98,7 +98,7 @@ export async function confirmPayment(registrationId: string, approved: boolean) 
   if (!registration) throw new Error("Inscripción no encontrada");
 
   const isOwner = registration.tournament.organizer.userId === session.user.id;
-  if (!isOwner && session.user.role !== "ADMIN") {
+  if (!isOwner && !isAdmin(session.user.role)) {
     throw new Error("Este torneo no te pertenece");
   }
 

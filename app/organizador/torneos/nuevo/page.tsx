@@ -1,4 +1,4 @@
-import { auth } from "@/auth";
+import { auth, isAdmin } from "@/auth";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { NewTournamentWizard } from "./NewTournamentWizard";
@@ -10,7 +10,7 @@ export default async function NewTournamentPage() {
   // no queremos ni siquiera renderizar el formulario para alguien que no
   // puede usarlo — evita filtrar la existencia de la lista de juegos, etc.
   if (!session?.user) redirect("/login?redirect=/organizador/torneos/nuevo");
-  if (session.user.role !== "ORGANIZER" && session.user.role !== "ADMIN") {
+  if (session.user.role !== "ORGANIZER" && !isAdmin(session.user.role)) {
     redirect("/registro?rol=organizador");
   }
 

@@ -1,4 +1,4 @@
-import { auth } from "@/auth";
+import { auth, isAdmin } from "@/auth";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { GalaxianBackground } from "@/app/components/GalaxianBackground";
@@ -10,7 +10,7 @@ import Link from "next/link";
 export default async function OrganizerDashboard() {
   const session = await auth();
   if (!session?.user) redirect("/login?redirect=/organizador/dashboard");
-  if (session.user.role !== "ORGANIZER" && session.user.role !== "ADMIN") redirect("/");
+  if (session.user.role !== "ORGANIZER" && !isAdmin(session.user.role)) redirect("/");
 
   const organizer = await prisma.organizerProfile.findUnique({
     where: { userId: session.user.id },

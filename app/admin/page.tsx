@@ -1,4 +1,4 @@
-import { auth } from "@/auth";
+import { auth, isAdmin } from "@/auth";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { PlanToggleButton } from "./PlanToggleButton";
@@ -10,7 +10,7 @@ export default async function AdminPanel() {
   // proyecto: ni siquiera se arma la query si no sos admin, no alcanza
   // con que el server action también lo valide.
   if (!session?.user) redirect("/login?redirect=/admin");
-  if (session.user.role !== "ADMIN") redirect("/");
+  if (!isAdmin(session.user.role)) redirect("/");
 
   const [totalPlayers, totalOrganizers, organizers, recentPayments, pendingProducts] =
     await Promise.all([

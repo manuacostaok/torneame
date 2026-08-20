@@ -1,4 +1,4 @@
-import { auth } from "@/auth";
+import { auth, isAdmin } from "@/auth";
 import { redirect, notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { PublishButton } from "./PublishButton";
@@ -18,7 +18,7 @@ export default async function EditTournamentPage({
     include: { organizer: true, game: true },
   });
   if (!tournament) notFound();
-  if (tournament.organizer.userId !== session.user.id && session.user.role !== "ADMIN") {
+  if (tournament.organizer.userId !== session.user.id && !isAdmin(session.user.role)) {
     redirect("/organizador/dashboard");
   }
 

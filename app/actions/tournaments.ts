@@ -2,7 +2,7 @@
 
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
-import { requireRole } from "@/auth";
+import { requireRole, isAdmin } from "@/auth";
 import { revalidatePath } from "next/cache";
 import { isRateLimited, assertSameOrigin } from "@/lib/security";
 import { notifyFollowersOfNewTournament } from "./follows";
@@ -96,7 +96,7 @@ export async function publishTournament(tournamentId: string) {
     include: { organizer: true },
   });
   if (!tournament) throw new Error("Torneo no encontrado");
-  if (tournament.organizer.userId !== session.user.id && session.user.role !== "ADMIN") {
+  if (tournament.organizer.userId !== session.user.id && !isAdmin(session.user.role)) {
     throw new Error("Este torneo no te pertenece");
   }
 

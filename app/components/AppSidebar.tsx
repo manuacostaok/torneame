@@ -24,15 +24,24 @@ interface NavLink {
 // una query a la base en cada render del sidebar.
 export function AppSidebar({ role }: { role: string }) {
   const pathname = usePathname();
+  // No importa isAdmin() de auth.ts a propósito — ese archivo arrastra
+  // configuración server-only (PrismaAdapter, etc.) que no puede entrar
+  // al bundle del cliente. Es la misma regla (SUPERADMIN incluye ADMIN)
+  // repetida acá nomás, no hay forma limpia de compartirla sin romper el
+  // build.
+  const isAdminRole = role === "ADMIN" || role === "SUPERADMIN";
 
   const links: NavLink[] = [
     { href: "/", label: "Inicio", icon: "🏠" },
     { href: "/torneos", label: "Torneos", icon: "🏆" },
     { href: "/jugador/dashboard", label: "Panel de jugador", icon: "🎮" },
-    role === "ORGANIZER" || role === "ADMIN"
+    role === "ORGANIZER" || isAdminRole
       ? { href: "/organizador/dashboard", label: "Panel de organizador", icon: "📋" }
       : { href: "/organizador/perfil/nuevo", label: "Crear torneo", icon: "➕" },
-    ...(role === "ADMIN" ? [{ href: "/admin", label: "Admin", icon: "🛠️" }] : []),
+    ...(isAdminRole ? [{ href: "/admin", label: "Admin", icon: "🛠️" }] : []),
+    ...(role === "SUPERADMIN"
+      ? [{ href: "/superadmin", label: "Superadmin", icon: "👑" }]
+      : []),
     { href: "/perfil", label: "Mi perfil", icon: "👤" },
   ];
 

@@ -14,6 +14,10 @@ enum UserRole {
   PLAYER
   ORGANIZER
   ADMIN
+  // Todo lo que puede ADMIN, más: dar/sacar el rol ADMIN a otros usuarios
+  // y suspender/restaurar el acceso de cualquier cuenta. Pensado para
+  // uno o dos dueños de la plataforma, no para el equipo de soporte.
+  SUPERADMIN
 }
 
 enum OrganizerPlan {
@@ -70,6 +74,9 @@ model User {
   phone         String? // formato E.164, ej. +5491122334455 — para WhatsApp
   whatsappOptIn Boolean   @default(false)
   role          UserRole  @default(PLAYER)
+  // Cuenta suspendida por un superadmin — no puede loguearse hasta que
+  // se la restaure. No borra nada, solo bloquea el acceso.
+  suspended     Boolean   @default(false)
   referralCode  String    @unique @default(cuid())
   referredById  String?
   referredBy    User?     @relation("Referrals", fields: [referredById], references: [id])

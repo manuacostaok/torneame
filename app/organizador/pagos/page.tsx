@@ -1,4 +1,4 @@
-import { auth } from "@/auth";
+import { auth, isAdmin } from "@/auth";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
@@ -7,7 +7,7 @@ import { PaymentReviewCard } from "./PaymentReviewCard";
 export default async function OrganizerPaymentsPage() {
   const session = await auth();
   if (!session?.user) redirect("/login?redirect=/organizador/pagos");
-  if (session.user.role !== "ORGANIZER" && session.user.role !== "ADMIN") redirect("/");
+  if (session.user.role !== "ORGANIZER" && !isAdmin(session.user.role)) redirect("/");
 
   const organizer = await prisma.organizerProfile.findUnique({
     where: { userId: session.user.id },

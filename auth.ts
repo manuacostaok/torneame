@@ -18,6 +18,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           where: { email: credentials.email as string },
         });
         if (!user || !user.passwordHash) return null;
+        // Mismo error genérico que credenciales inválidas a propósito —
+        // no le confirmamos a quien intenta loguearse que la cuenta
+        // existe pero está suspendida
+        if (user.suspended) return null;
 
         const valid = await compare(credentials.password as string, user.passwordHash);
         if (!valid) return null;
@@ -56,12 +60,24 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 /**
  * Helper de autorización para usar en server actions y route handlers.
  * Uso: await requireRole(["ORGANIZER", "ADMIN"])
+ *
+ * Si "ADMIN" está en la lista, SUPERADMIN también pasa — es un
+ * superconjunto de permisos, no hace falta acordarse de escribir los dos
+ * roles en cada llamada.
  */
 export async function requireRole(allowedRoles: string[]) {
   const session = await auth();
   if (!session?.user) throw new Error("No autenticado");
-  if (!allowedRoles.includes(session.user.role)) {
+  const effectiveRoles = allowedRoles.includes("ADMIN")
+    ? [...allowedRoles, "SUPERADMIN"]
+    : allowedRoles;
+  if (!effectiveRoles.includes(session.user.role)) {
     throw new Error("No tenés permiso para hacer esto");
   }
   return session;
+}
+
+/** SUPERADMIN tiene todo lo que tiene ADMIN, y más — usar esto en vez de comparar contra "ADMIN" a mano. */
+export function isAdmin(role: string): boolean {
+  return role === "ADMIN" || role === "SUPERADMIN";
 }
