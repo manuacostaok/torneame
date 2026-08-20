@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
-import { AnimatedBackground } from "@/app/components/AnimatedBackground";
+import { PacmanBackground } from "@/app/components/PacmanBackground";
 import { RegisterButton } from "./RegisterButton";
 import { CommentsSection } from "./CommentsSection";
 import { BracketView } from "./BracketView";
@@ -42,7 +42,7 @@ export default async function TournamentPage({ params }: { params: Promise<{ slu
 
   return (
     <main className="relative min-h-screen px-4 py-6 sm:px-8">
-      <AnimatedBackground />
+      <PacmanBackground />
 
       <div className="mx-auto max-w-3xl">
         {isOwner && tournament.visibility === "PRIVATE" && tournament.accessCode && (

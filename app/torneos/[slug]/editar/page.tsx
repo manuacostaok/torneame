@@ -2,6 +2,7 @@ import { auth } from "@/auth";
 import { redirect, notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { PublishButton } from "./PublishButton";
+import Link from "next/link";
 
 export default async function EditTournamentPage({
   params,
@@ -25,7 +26,11 @@ export default async function EditTournamentPage({
 
   return (
     <main className="mx-auto max-w-sm px-4 py-10">
-      <h1 className="text-xl font-medium">Publicar torneo</h1>
+      <Link href="/organizador/dashboard" className="text-sm text-secondary">
+        ← Volver a mi panel
+      </Link>
+
+      <h1 className="mt-3 text-xl font-medium">Publicar torneo</h1>
       <p className="mt-1 text-sm text-secondary">
         Revisá los datos y publicalo para abrir la inscripción.
       </p>
@@ -48,6 +53,15 @@ export default async function EditTournamentPage({
           Inicia: {new Date(tournament.startsAt).toLocaleString("es-AR")}
         </p>
       </div>
+
+      {tournament.visibility === "PRIVATE" && tournament.accessCode && (
+        <div className="mt-4 rounded-xl bg-surface-1 p-4 text-sm">
+          <p className="text-secondary">
+            Código para compartir con quien quieras invitar (no aparece en ningún listado):
+          </p>
+          <p className="mt-2 text-2xl font-medium tracking-widest">{tournament.accessCode}</p>
+        </div>
+      )}
 
       <p className="mt-4 text-xs text-muted">
         Para cambiar estos datos por ahora hay que crear el torneo de nuevo — la edición de

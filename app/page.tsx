@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { AnimatedBackground } from "./components/AnimatedBackground";
+import { PacmanBackground } from "./components/PacmanBackground";
 import { GalaxianBackground } from "./components/GalaxianBackground";
 import { AnimatedLogoLockup } from "./components/AnimatedLogoLockup";
 import { BracketDemo } from "./components/BracketDemo";
@@ -30,7 +30,7 @@ export default async function LandingPage() {
 
   return (
     <main className="relative min-h-screen">
-      <AnimatedBackground />
+      <PacmanBackground />
 
       <nav className="flex items-center justify-between px-4 py-4 sm:px-8">
         <Link href="/" className="flex items-center gap-2">

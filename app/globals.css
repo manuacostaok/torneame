@@ -57,11 +57,85 @@ h3 {
   font-family: "Space Grotesk", "Inter", system-ui, sans-serif;
 }
 
-/* Fondo animado — respeta prefers-reduced-motion, congela el movimiento
-   sin ocultar los elementos (siguen ahí como decoración estática) */
+/* Fondo estilo arcade (PacmanBackground.tsx) — reemplazó al fondo de
+   círculos difuminados por algo con más onda de videojuego. La "boca" de
+   Pac-Man es un clip-path de 3 puntos que se anima entre abierto/cerrado
+   — la técnica clásica de CSS para esto, liviana (sin canvas). */
+@keyframes pacman-chomp {
+  0%,
+  100% {
+    clip-path: polygon(100% 74%, 44% 48%, 100% 21%);
+  }
+  50% {
+    clip-path: polygon(100% 50%, 44% 48%, 100% 50%);
+  }
+}
+
+@keyframes pacman-move {
+  from {
+    transform: translateX(-40px);
+  }
+  to {
+    transform: translateX(calc(100vw));
+  }
+}
+
+.pacman-sprite {
+  position: absolute;
+  left: 0;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--text-warning);
+  animation:
+    pacman-chomp 0.35s linear infinite,
+    pacman-move linear infinite;
+}
+
+.ghost-sprite {
+  position: absolute;
+  left: 0;
+  width: 22px;
+  height: 20px;
+  border-radius: 11px 11px 3px 3px;
+  animation: pacman-move linear infinite;
+}
+
+.ghost-sprite::before,
+.ghost-sprite::after {
+  content: "";
+  position: absolute;
+  top: 6px;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--surface-0);
+}
+
+.ghost-sprite::before {
+  left: 4px;
+}
+
+.ghost-sprite::after {
+  left: 13px;
+}
+
+.dots-trail {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 4px;
+  transform: translateY(-50%);
+  background-image: radial-gradient(circle, var(--border-strong) 2px, transparent 2px);
+  background-size: 26px 4px;
+  background-repeat: repeat-x;
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .motion-safe\:animate-float-1,
-  .motion-safe\:animate-float-2 {
+  .pacman-sprite,
+  .ghost-sprite {
     animation: none !important;
+    left: 30%;
   }
 }

@@ -2,6 +2,7 @@ import "./globals.css";
 import { ToastProvider } from "./components/Toast";
 import { ServiceWorkerRegister } from "./components/ServiceWorkerRegister";
 import { InstallAppBanner } from "./components/InstallAppBanner";
+import { AppShell } from "./components/AppShell";
 import { Providers } from "./providers";
 
 export const metadata = {
@@ -26,7 +27,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <Providers>
           <ToastProvider>
             <ServiceWorkerRegister />
-            {children}
+            <AppShell>{children}</AppShell>
             <InstallAppBanner />
           </ToastProvider>
         </Providers>

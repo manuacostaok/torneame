@@ -110,13 +110,13 @@ export function NewTournamentWizard({ games }: { games: Game[] }) {
           maxPlayers: Number(form.maxPlayers),
           visibility: form.visibility,
         });
-        router.push(`/torneos/${tournament.id}`);
-        toast(
-          form.visibility === "PRIVATE"
-            ? "Torneo privado creado — el código para invitar gente está en la página del torneo"
-            : "Torneo creado como borrador — publicalo cuando quieras",
-          "success"
-        );
+        // A publicar, no a la página pública — el torneo queda en
+        // borrador hasta publicarlo, y ahí no se puede ni inscribir gente
+        // ni verlo en los listados. Mandar directo a /torneos/[id] dejaba
+        // al organizador en una página con un botón "Inscribirme" que en
+        // realidad todavía no funciona, muy confuso.
+        router.push(`/torneos/${tournament.id}/editar`);
+        toast("¡Torneo creado! Revisalo y publicalo para que se pueda ver e inscribir gente.", "success");
       } catch (err) {
         // El server action ya valida con zod y chequea el rol — acá solo
         // mostramos el mensaje, no repetimos la lógica de validación
