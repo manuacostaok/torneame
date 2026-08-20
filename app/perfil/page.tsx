@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import { ProfileForm } from "./ProfileForm";
+import { SignOutButton } from "@/app/components/SignOutButton";
 
 export default async function ProfilePage() {
   const session = await auth();
@@ -47,6 +48,10 @@ export default async function ProfilePage() {
             + Crear torneo (convertite en organizador)
           </Link>
         )}
+      </div>
+
+      <div className="mt-8 text-center">
+        <SignOutButton />
       </div>
     </main>
   );

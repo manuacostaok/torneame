@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { GalaxianBackground } from "@/app/components/GalaxianBackground";
 import { PushNotificationOptIn } from "@/app/components/PushNotificationOptIn";
+import { SignOutButton } from "@/app/components/SignOutButton";
 import Link from "next/link";
 
 export default async function PlayerDashboard() {
@@ -67,25 +68,44 @@ export default async function PlayerDashboard() {
             </div>
           </div>
           <div className="flex flex-shrink-0 flex-col items-end gap-2">
-            <Link
-              href="/torneos"
-              className="rounded-md bg-primary px-4 py-2 text-sm text-white"
-            >
-              Buscar torneos
-            </Link>
-            <div className="flex gap-3 text-xs">
+            <div className="flex gap-2">
+              <Link
+                href="/torneos"
+                className="rounded-md bg-primary px-4 py-2 text-sm text-white"
+              >
+                Buscar torneos
+              </Link>
               <Link
                 href={organizerProfile ? "/organizador/dashboard" : "/organizador/perfil/nuevo"}
-                className="text-accent"
+                className="rounded-md border border-strong px-4 py-2 text-sm text-accent"
               >
                 {organizerProfile ? "Mi panel de organizador" : "Crear torneo"}
               </Link>
+            </div>
+            <div className="flex gap-3 text-xs">
               <Link href="/perfil" className="text-secondary">
                 Mi perfil
               </Link>
+              <SignOutButton />
             </div>
           </div>
         </div>
+
+        {!organizerProfile && (
+          <div className="mt-4 rounded-xl border border-dashed border-strong p-4 text-sm">
+            <p className="font-medium">¿Querés organizar tu propio torneo?</p>
+            <p className="mt-1 text-secondary">
+              Cualquier jugador puede convertirse en organizador — no perdés tu cuenta ni tu
+              perfil de jugador, simplemente sumás el de organizador.
+            </p>
+            <Link
+              href="/organizador/perfil/nuevo"
+              className="mt-3 inline-block rounded-md bg-primary px-4 py-2 text-sm text-white"
+            >
+              Crear mi primer torneo
+            </Link>
+          </div>
+        )}
 
         {notifications.length > 0 && (
           <div className="mt-6 flex flex-col gap-2">

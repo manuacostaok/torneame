@@ -1,5 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { AnimatedBackground } from "./components/AnimatedBackground";
+import { GalaxianBackground } from "./components/GalaxianBackground";
+import { AnimatedLogoLockup } from "./components/AnimatedLogoLockup";
 import { BracketDemo } from "./components/BracketDemo";
 import { HowItWorks } from "./components/HowItWorks";
 import { GamesGrid } from "./components/GamesGrid";
@@ -44,9 +46,14 @@ export default async function LandingPage() {
         </Link>
       </nav>
 
-      {/* Hero */}
-      <section className="mx-auto max-w-2xl px-4 py-10 text-center sm:py-16">
-        <span className="inline-block rounded-full bg-[var(--bg-danger)] px-3 py-1 text-xs text-[var(--text-danger)]">
+      {/* Hero — mismo logo animado y fondo de naves que el login, para que
+          el primer momento de marca sea consistente en toda la app */}
+      <section className="relative mx-auto max-w-2xl overflow-hidden px-4 py-10 text-center sm:py-16">
+        <GalaxianBackground className="opacity-70" />
+
+        <AnimatedLogoLockup size={48} titleAs="p" />
+
+        <span className="mt-6 inline-block rounded-full bg-[var(--bg-danger)] px-3 py-1 text-xs text-[var(--text-danger)]">
           {upcomingTournaments.filter((t) => t.status === "IN_PROGRESS").length} torneos en vivo ahora
         </span>
         <h1 className="mt-4 text-3xl font-medium leading-tight sm:text-5xl">
