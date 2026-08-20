@@ -34,7 +34,9 @@ describe("dropToLosers", () => {
     const bracket = generateDoubleElimination(makePlayers(8));
     const updated = dropToLosers(bracket, "p3", 1);
     const placed = updated.matches.find(
-      (m) => m.playerAId === "p3" || m.playerBId === "p3"
+      (m) =>
+        m.bracketSide === "losers" &&
+        (m.playerAId === "p3" || m.playerBId === "p3")
     );
     expect(placed).toBeDefined();
     expect(placed?.bracketSide).toBe("losers");

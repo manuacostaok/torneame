@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { createTournament } from "@/app/actions/tournaments";
 import { useToast } from "@/app/components/Toast";
+import { ImageUploader } from "@/app/components/ImageUploader";
 
 interface Game {
   id: string;
@@ -159,18 +160,11 @@ export function NewTournamentWizard({ games }: { games: Game[] }) {
             className="rounded-md border border-strong px-3 py-2 text-sm"
             rows={3}
           />
-          <div>
-            <input
-              value={form.bannerImageUrl}
-              onChange={(e) => update("bannerImageUrl", e.target.value)}
-              placeholder="URL de la imagen/flyer del torneo (opcional)"
-              className="w-full rounded-md border border-strong px-3 py-2 text-sm"
-            />
-            <p className="mt-1 text-xs text-muted">
-              Subí la imagen a donde prefieras (Imgur, Drive público, etc.) y pegá el link acá —
-              todavía no subimos archivos directo desde acá.
-            </p>
-          </div>
+          <ImageUploader
+            value={form.bannerImageUrl}
+            onChange={(url) => update("bannerImageUrl", url)}
+            label="Imagen/flyer del torneo (opcional)"
+          />
         </div>
       )}
 

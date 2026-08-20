@@ -22,7 +22,16 @@ Entrá a **developers.mercadopago.com**, creá una aplicación nueva, y andá
 a "Credenciales". Para probar todo primero usá las de **TEST** (no las de
 producción) — así podés simular pagos sin plata real.
 
-## 4. Importar el proyecto en Vercel
+## 4. Crear el preset de subida en Cloudinary (gratis)
+
+Entrá a **cloudinary.com**, creá una cuenta gratis. Copiá el "Cloud name"
+que te muestra en el Dashboard. Después andá a **Settings → Upload →
+Upload presets → Add upload preset**, poné el modo en **Unsigned**
+(así el navegador puede subir directo sin pasar por nuestro servidor),
+y opcionalmente restringilo a la carpeta/tamaño que prefieras. Copiá el
+nombre del preset.
+
+## 5. Importar el proyecto en Vercel
 
 Entrá a **vercel.com**, conectá tu cuenta de GitHub, e importá el
 repositorio `torneame`. Antes de darle a Deploy, cargá estas variables de
@@ -33,12 +42,13 @@ entorno (Settings → Environment Variables):
 | `DATABASE_URL` | Neon (paso 2) |
 | `AUTH_SECRET` | Cualquier string largo random |
 | `MERCADOPAGO_ACCESS_TOKEN` | Mercado Pago (paso 3, credencial de TEST primero) |
-| `MERCADOPAGO_WEBHOOK_SECRET` | Panel de Mercado Pago, al configurar el webhook (paso 6) |
-| `APP_URL` | La completás en el paso 5, con la URL que te da Vercel |
+| `MERCADOPAGO_WEBHOOK_SECRET` | Panel de Mercado Pago, al configurar el webhook (paso 7) |
+| `APP_URL` | La completás en el paso 6, con la URL que te da Vercel |
+| `NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME` / `NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET` | Cloudinary (paso 4) |
 | `TWILIO_ACCOUNT_SID` / `TWILIO_AUTH_TOKEN` | Opcional — solo si querés WhatsApp ya andando |
 | `VAPID_PUBLIC_KEY` / `VAPID_PRIVATE_KEY` / `NEXT_PUBLIC_VAPID_PUBLIC_KEY` | Se generan una vez con `npx web-push generate-vapid-keys` (podés correrlo desde el botón de "Terminal" que trae el propio Vercel, si no tenés terminal local) |
 
-## 5. Deployar y agarrar tu URL pública
+## 6. Deployar y agarrar tu URL pública
 
 Dale a **Deploy**. Vercel instala todo y crea las tablas en tu base de
 Neon solo — el build corre `prisma db push` automáticamente, no hace
@@ -46,7 +56,7 @@ falta un paso de migración aparte. Te va a dar una URL tipo
 `torneame.vercel.app`. Volvé a Environment Variables, completá `APP_URL`
 con esa URL real, y hacé un redeploy para que quede sincronizado.
 
-## 6. Configurar el webhook de Mercado Pago
+## 7. Configurar el webhook de Mercado Pago
 
 En developers.mercadopago.com, dentro de tu aplicación, configurá la URL
 de notificaciones apuntando a:
@@ -55,14 +65,14 @@ de notificaciones apuntando a:
 https://tu-url.vercel.app/api/webhooks/mercadopago
 ```
 
-## 7. Probar el flujo completo
+## 8. Probar el flujo completo
 
 Entrá a tu URL de Vercel, creá una cuenta de organizador, armá un torneo
 de prueba, e inscribite con otra cuenta usando las credenciales de TEST
 de Mercado Pago. Cuando todo funcione bien, recién ahí cambiás las
 credenciales de Mercado Pago de test a las de producción.
 
-## 8. Activar la CSP en modo bloqueante (opcional, después de probar)
+## 9. Activar la CSP en modo bloqueante (opcional, después de probar)
 
 El proyecto trae una política de seguridad de contenido (CSP) en modo
 `Report-Only` — no bloquea nada todavía, porque nunca pude levantar la

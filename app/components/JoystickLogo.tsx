@@ -18,10 +18,12 @@ export function JoystickLogo({
   progress = 1,
   size = 48,
   className = "",
+  style,
 }: {
   progress?: number;
   size?: number;
   className?: string;
+  style?: React.CSSProperties;
 }) {
   const clamped = Math.min(Math.max(progress, 0), 1);
   const dashoffset = OUTLINE_LENGTH * (1 - clamped);
@@ -34,6 +36,7 @@ export function JoystickLogo({
       viewBox="0 0 160 100"
       fill="none"
       className={className}
+      style={style}
       role="img"
       aria-label="Torneame"
     >

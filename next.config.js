@@ -11,7 +11,7 @@ const cspDirectives = [
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
   "font-src 'self' https://fonts.gstatic.com",
   "img-src 'self' https: data:",
-  "connect-src 'self' https://api.mercadopago.com",
+  "connect-src 'self' https://api.mercadopago.com https://api.cloudinary.com",
   "frame-ancestors 'none'", // mismo efecto que X-Frame-Options: DENY, pero es la forma moderna
 ].join("; ");
 

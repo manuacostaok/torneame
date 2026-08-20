@@ -97,13 +97,27 @@ conviene pasar a `prisma migrate` con migraciones versionadas en vez de
 
 ## Próximo en el roadmap de código
 
-1. `app/api/webhooks/mercadopago/route.ts` — el webhook real que llama a `confirmPayment()` (hoy la función existe pero no está conectada a un endpoint).
-2. Wizard de creación de torneo (`app/organizador/torneos/nuevo`) — UI sobre el server action `createTournament` que ya existe.
-3. Dashboard de organizador (torneos activos, recaudación, inscriptos pendientes).
-4. Fase de grupos (el único formato del roadmap original que todavía no tiene motor propio — se puede armar combinando round robin por grupo + single elimination para los cruces finales).
-5. Perfil de jugador público con historial y ranking cross-organizador.
+Los ítems que antes figuraban acá (webhook de Mercado Pago, wizard de creación
+de torneo, dashboard de organizador, fase de grupos, perfil de jugador
+público) ya están implementados — ver "Estado actual" y "V1 del roadmap"
+arriba. Lo que queda pendiente de verdad:
 
-Este orden no es arbitrario: el motor de brackets es el módulo más riesgoso técnicamente (es lógica, no CRUD), así que lo resolvemos y testeamos primero, antes de construir la UI sobre una base inestable.
+1. **CSP en modo bloqueante** — `next.config.js` ya tiene la
+   `Content-Security-Policy` armada dominio por dominio, pero corre en
+   modo `Report-Only` a propósito (ver el comentario ahí). Pasarla a
+   bloqueante una vez confirmada unos días en producción sin reportes
+   inesperados (ver paso 9 de `DEPLOY.md`).
+
+## Subida de imágenes (Cloudinary)
+
+El flyer del torneo (`app/organizador/torneos/nuevo/NewTournamentWizard.tsx`)
+ya sube el archivo de verdad en vez de pedir pegar un link — usa
+`app/components/ImageUploader.tsx`, que sube directo del navegador a
+Cloudinary con un "unsigned upload preset" (el archivo nunca pasa por
+nuestro servidor, y el API secret de Cloudinary nunca se expone al
+cliente). Necesita `NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME` y
+`NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET` en el entorno — ver `.env.example`
+y el paso 4 de `DEPLOY.md` para crear el preset.
 
 ## Auditoría y correcciones de esta vuelta
 
@@ -152,4 +166,4 @@ El nav de la landing linkeaba a páginas que nunca se habían construido. Se enc
 - Se agregó un usuario **admin de prueba** al seed (`admin@torneame.demo` / `demo1234`), porque no había forma de probar el panel nuevo sin esto.
 - Se corrigió sobre la marcha un parche feo que yo mismo había escrito (un `.catch()` con `as never` para esquivar que `OrganizerProfile` no tenía `createdAt`) — se agregó el campo de verdad al schema en vez de esquivar el problema.
 
-**Lo que queda pendiente y no quiero pasar por alto**: la carga de imágenes hoy es pegar un link (Imgur, Drive público, etc.), no subir el archivo directo desde la plataforma. Subir archivos de verdad necesita un servicio de storage (S3, Cloudinary, uploadthing) con credenciales propias — es una pieza de infraestructura real, no algo que tenga sentido improvisar sin esas credenciales.
+**Actualización**: la carga de imágenes ahora sube el archivo de verdad a Cloudinary en vez de pedir pegar un link — ver la sección "Subida de imágenes (Cloudinary)" más abajo.

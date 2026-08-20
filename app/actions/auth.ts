@@ -73,6 +73,8 @@ export async function createPlayerProfile(input: z.infer<typeof playerProfileSch
   const data = playerProfileSchema.parse(input);
   return prisma.playerProfile.create({ data: { userId: session.user.id, gamertag: data.gamertag } });
 }
+
+const organizerProfileSchema = z.object({
   orgName: z.string().trim().min(2).max(60),
   slug: z
     .string()

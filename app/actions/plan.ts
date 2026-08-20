@@ -34,7 +34,7 @@ export async function startProSubscription() {
     body: {
       reason: "Torneame PRO — plan mensual",
       external_reference: organizer.id,
-      payer_email: session.user.email,
+      payer_email: session.user.email ?? undefined,
       auto_recurring: {
         frequency: 1,
         frequency_type: "months",

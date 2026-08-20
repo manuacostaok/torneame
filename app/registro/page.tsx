@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { registerUser } from "@/app/actions/auth";
@@ -8,6 +8,14 @@ import { LoginModal } from "@/app/components/LoginModal";
 import { useToast } from "@/app/components/Toast";
 
 export default function RegisterPage() {
+  return (
+    <Suspense>
+      <RegisterForm />
+    </Suspense>
+  );
+}
+
+function RegisterForm() {
   const searchParams = useSearchParams();
   const initialRole = searchParams.get("rol") === "organizador" ? "ORGANIZER" : "PLAYER";
 
