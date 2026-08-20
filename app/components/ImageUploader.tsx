@@ -1,15 +1,13 @@
 "use client";
 
 import { useRef, useState } from "react";
+import { getCloudinaryUploadSignature } from "@/app/actions/cloudinary";
 
-// Subida directa del navegador a Cloudinary vía "unsigned upload preset" —
-// el archivo nunca pasa por nuestro servidor (evita el límite de tamaño de
-// body de las funciones serverless de Vercel) y el API secret de Cloudinary
-// nunca se expone al cliente, solo el cloud name y el preset (que se puede
-// restringir en el panel de Cloudinary a subidas de imagen, tamaño máximo, etc.).
-const CLOUD_NAME = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
-const UPLOAD_PRESET = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET;
-
+// Subida directa del navegador a Cloudinary — el archivo nunca pasa por
+// nuestro servidor (evita el límite de tamaño de body de las funciones
+// serverless de Vercel). Firmada: primero le pedimos al server action una
+// firma de un solo uso (el API secret nunca sale del servidor), y con esa
+// firma el navegador sube directo a la API de Cloudinary.
 const MAX_FILE_SIZE_MB = 8;
 
 interface ImageUploaderProps {
@@ -34,26 +32,29 @@ export function ImageUploader({ value, onChange, label }: ImageUploaderProps) {
       setError(`La imagen no puede pesar más de ${MAX_FILE_SIZE_MB}MB`);
       return;
     }
-    if (!CLOUD_NAME || !UPLOAD_PRESET) {
-      setError("Falta configurar Cloudinary (ver .env.example)");
-      return;
-    }
 
     setIsUploading(true);
     try {
+      const { timestamp, signature, apiKey, cloudName } = await getCloudinaryUploadSignature();
+      if (!apiKey || !cloudName) {
+        throw new Error("Falta configurar Cloudinary (ver .env.example)");
+      }
+
       const body = new FormData();
       body.append("file", file);
-      body.append("upload_preset", UPLOAD_PRESET);
+      body.append("timestamp", String(timestamp));
+      body.append("signature", signature);
+      body.append("api_key", apiKey);
 
-      const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`, {
+      const res = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, {
         method: "POST",
         body,
       });
       if (!res.ok) throw new Error("Cloudinary rechazó la imagen");
       const data = await res.json();
       onChange(data.secure_url as string);
-    } catch {
-      setError("No se pudo subir la imagen, probá de nuevo");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "No se pudo subir la imagen, probá de nuevo");
     } finally {
       setIsUploading(false);
     }

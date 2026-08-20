@@ -36,14 +36,13 @@ export default async function AdminPanel() {
       prisma.productOrder.count({ where: { status: "PENDING" } }),
     ]);
 
-  const totalCommission = recentPayments.reduce((sum, p) => sum + Number(p.commissionAmount), 0);
   const totalRecaudado = recentPayments.reduce((sum, p) => sum + Number(p.amount), 0);
 
   return (
     <main className="mx-auto max-w-4xl px-4 py-10">
       <h1 className="text-xl font-medium">Panel de administrador</h1>
 
-      <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
+      <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-3">
         <div className="rounded-xl bg-surface-1 p-4">
           <p className="text-xs text-muted">Jugadores</p>
           <p className="mt-1 text-xl font-medium">{totalPlayers}</p>
@@ -53,15 +52,9 @@ export default async function AdminPanel() {
           <p className="mt-1 text-xl font-medium">{totalOrganizers}</p>
         </div>
         <div className="rounded-xl bg-surface-1 p-4">
-          <p className="text-xs text-muted">Recaudado (últimos 30 pagos)</p>
+          <p className="text-xs text-muted">Inscripciones confirmadas (últimos 30 pagos)</p>
           <p className="mt-1 text-xl font-medium text-warning">
             ${totalRecaudado.toLocaleString("es-AR")}
-          </p>
-        </div>
-        <div className="rounded-xl bg-surface-1 p-4">
-          <p className="text-xs text-muted">Nuestra comisión</p>
-          <p className="mt-1 text-xl font-medium text-warning">
-            ${totalCommission.toLocaleString("es-AR")}
           </p>
         </div>
       </div>
@@ -108,9 +101,6 @@ export default async function AdminPanel() {
               </div>
               <div className="flex-shrink-0 text-right">
                 <p>${Number(p.amount).toLocaleString("es-AR")}</p>
-                <p className="text-xs text-muted">
-                  comisión ${Number(p.commissionAmount).toLocaleString("es-AR")}
-                </p>
               </div>
             </div>
           ))}

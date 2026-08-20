@@ -106,6 +106,10 @@ model OrganizerProfile {
   slug         String        @unique
   logoUrl      String?
   bio          String?
+  // Alias/CBU/lo que sea que el organizador comparte con los jugadores
+  // para que le transfieran la inscripción directo a él — Torneame no
+  // procesa ese dinero, ver Payment más abajo.
+  paymentAlias String?
   verified     Boolean       @default(false)
   plan         OrganizerPlan @default(FREE)
   customDomain String? // solo plan PRO — ej. "torneoscoronel.com"
@@ -182,15 +186,19 @@ model Registration {
   @@unique([tournamentId, playerId])
 }
 
+// El pago de la inscripción va directo del jugador al organizador por
+// transferencia — Torneame no cobra comisión ni toca esa plata. Esto solo
+// registra el comprobante para que el organizador lo revise y lo apruebe
+// o rechace a mano (ver confirmPayment en app/actions/registrations.ts).
 model Payment {
-  id               String        @id @default(cuid())
-  registrationId   String        @unique
-  registration     Registration  @relation(fields: [registrationId], references: [id])
-  amount           Decimal
-  provider         String        @default("mercadopago")
-  status           PaymentStatus @default(PENDING)
-  commissionAmount Decimal       @default(0)
-  createdAt        DateTime      @default(now())
+  id              String        @id @default(cuid())
+  registrationId  String        @unique
+  registration    Registration  @relation(fields: [registrationId], references: [id])
+  amount          Decimal
+  provider        String        @default("transferencia")
+  status          PaymentStatus @default(PENDING)
+  receiptImageUrl String? // comprobante que sube el jugador (Cloudinary)
+  createdAt       DateTime      @default(now())
 }
 
 model Bracket {

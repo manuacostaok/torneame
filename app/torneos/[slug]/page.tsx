@@ -87,6 +87,8 @@ export default async function TournamentPage({ params }: { params: Promise<{ slu
               tournamentId={tournament.id}
               isLoggedIn={!!session?.user}
               spotsLeft={tournament.maxPlayers - tournament._count.registrations}
+              entryFee={Number(tournament.entryFee)}
+              organizerPaymentAlias={tournament.organizer.paymentAlias}
             />
           </div>
 

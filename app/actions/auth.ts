@@ -84,6 +84,10 @@ const organizerProfileSchema = z.object({
     .min(3)
     .max(40),
   bio: z.string().trim().max(300).optional(),
+  // Alias/CBU/lo que sea para que le transfieran la inscripción de los
+  // torneos pagos directo — opcional acá porque puede armar solo torneos
+  // gratis, o cargarlo más adelante antes de publicar uno pago.
+  paymentAlias: z.string().trim().max(60).optional(),
 });
 
 /**
@@ -112,7 +116,13 @@ export async function createOrganizerProfile(input: z.infer<typeof organizerProf
   if (slugTaken) throw new Error("Ese nombre de usuario ya está en uso, probá otro");
 
   const profile = await prisma.organizerProfile.create({
-    data: { userId: session.user.id, orgName: data.orgName, slug: data.slug, bio: data.bio },
+    data: {
+      userId: session.user.id,
+      orgName: data.orgName,
+      slug: data.slug,
+      bio: data.bio,
+      paymentAlias: data.paymentAlias,
+    },
   });
 
   if (session.user.role === "PLAYER") {
@@ -120,6 +130,22 @@ export async function createOrganizerProfile(input: z.infer<typeof organizerProf
   }
 
   return profile;
+}
+
+/** Para actualizar el alias de pago después de creado el perfil (ej. si lo cambió de banco). */
+export async function updatePaymentAlias(paymentAlias: string) {
+  const session = await auth();
+  if (!session?.user) throw new Error("Necesitás iniciar sesión");
+
+  const alias = paymentAlias.trim().slice(0, 60);
+
+  const organizer = await prisma.organizerProfile.findUnique({ where: { userId: session.user.id } });
+  if (!organizer) throw new Error("No tenés perfil de organizador");
+
+  return prisma.organizerProfile.update({
+    where: { userId: session.user.id },
+    data: { paymentAlias: alias || null },
+  });
 }
 
 const updateProfileSchema = z.object({

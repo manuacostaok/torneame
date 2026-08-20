@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { GalaxianBackground } from "@/app/components/GalaxianBackground";
 import { suggestBestTiming, suggestBestFormat } from "@/lib/insights";
 import { SignOutButton } from "@/app/components/SignOutButton";
+import { PaymentAliasEditor } from "./PaymentAliasEditor";
 import Link from "next/link";
 
 export default async function OrganizerDashboard() {
@@ -97,11 +98,19 @@ export default async function OrganizerDashboard() {
             <p className="text-xs text-muted">Torneos activos</p>
             <p className="mt-1 text-2xl font-medium">{activeTournaments.length}</p>
           </div>
-          <div className="rounded-xl bg-surface-1 p-4">
+          <Link
+            href="/organizador/pagos"
+            className="rounded-xl bg-surface-1 p-4 transition hover:bg-surface-2"
+          >
             <p className="text-xs text-muted">Pagos pendientes</p>
             <p className="mt-1 text-2xl font-medium">{pendingPayments.length}</p>
-          </div>
+            {pendingPayments.length > 0 && (
+              <p className="mt-1 text-xs text-accent">Revisar comprobantes →</p>
+            )}
+          </Link>
         </div>
+
+        <PaymentAliasEditor currentAlias={organizer.paymentAlias ?? ""} />
 
         {(timingSuggestion || formatSuggestion) && (
           <div className="mt-4 rounded-xl bg-surface-1 p-4">

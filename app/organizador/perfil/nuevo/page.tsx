@@ -10,6 +10,7 @@ export default function NewOrganizerProfilePage() {
   const [orgName, setOrgName] = useState("");
   const [slug, setSlug] = useState("");
   const [bio, setBio] = useState("");
+  const [paymentAlias, setPaymentAlias] = useState("");
   const [loading, setLoading] = useState(false);
   const toast = useToast();
   const router = useRouter();
@@ -33,7 +34,12 @@ export default function NewOrganizerProfilePage() {
     e.preventDefault();
     setLoading(true);
     try {
-      await createOrganizerProfile({ orgName, slug, bio: bio || undefined });
+      await createOrganizerProfile({
+        orgName,
+        slug,
+        bio: bio || undefined,
+        paymentAlias: paymentAlias || undefined,
+      });
       // Si el usuario todavía era PLAYER, el server action ya lo promovió a
       // ORGANIZER en la base — esto refresca el JWT de la sesión actual con
       // el rol nuevo, para no tener que pedirle reloguear para poder crear
@@ -86,6 +92,19 @@ export default function NewOrganizerProfilePage() {
           rows={3}
           className="rounded-md border border-strong bg-transparent px-3 py-2 text-sm"
         />
+        <div>
+          <input
+            value={paymentAlias}
+            onChange={(e) => setPaymentAlias(e.target.value)}
+            placeholder="Alias o CBU para cobrar inscripciones (opcional)"
+            maxLength={60}
+            className="w-full rounded-md border border-strong bg-transparent px-3 py-2 text-sm"
+          />
+          <p className="mt-1 text-xs text-muted">
+            Los jugadores te transfieren la inscripción directo a vos acá — Torneame no cobra
+            comisión ni toca esa plata. Lo podés cargar después si todavía no lo tenés a mano.
+          </p>
+        </div>
         <button
           type="submit"
           disabled={loading}

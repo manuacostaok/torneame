@@ -22,14 +22,12 @@ Entrá a **developers.mercadopago.com**, creá una aplicación nueva, y andá
 a "Credenciales". Para probar todo primero usá las de **TEST** (no las de
 producción) — así podés simular pagos sin plata real.
 
-## 4. Crear el preset de subida en Cloudinary (gratis)
+## 4. Sacar las credenciales de Cloudinary (gratis)
 
-Entrá a **cloudinary.com**, creá una cuenta gratis. Copiá el "Cloud name"
-que te muestra en el Dashboard. Después andá a **Settings → Upload →
-Upload presets → Add upload preset**, poné el modo en **Unsigned**
-(así el navegador puede subir directo sin pasar por nuestro servidor),
-y opcionalmente restringilo a la carpeta/tamaño que prefieras. Copiá el
-nombre del preset.
+Entrá a **cloudinary.com**, creá una cuenta gratis. En el Dashboard vas a
+ver "Cloud name", "API Key" y "API Secret" — copiá los tres (el secret
+solo se ve ahí, guardalo). La subida queda firmada del lado del
+servidor: el API secret nunca se expone al navegador.
 
 ## 5. Importar el proyecto en Vercel
 
@@ -44,7 +42,7 @@ entorno (Settings → Environment Variables):
 | `MERCADOPAGO_ACCESS_TOKEN` | Mercado Pago (paso 3, credencial de TEST primero) |
 | `MERCADOPAGO_WEBHOOK_SECRET` | Panel de Mercado Pago, al configurar el webhook (paso 7) |
 | `APP_URL` | La completás en el paso 6, con la URL que te da Vercel |
-| `NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME` / `NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET` | Cloudinary (paso 4) |
+| `CLOUDINARY_CLOUD_NAME` / `CLOUDINARY_API_KEY` / `CLOUDINARY_API_SECRET` | Cloudinary (paso 4) |
 | `TWILIO_ACCOUNT_SID` / `TWILIO_AUTH_TOKEN` | Opcional — solo si querés WhatsApp ya andando |
 | `VAPID_PUBLIC_KEY` / `VAPID_PRIVATE_KEY` / `NEXT_PUBLIC_VAPID_PUBLIC_KEY` | Se generan una vez con `npx web-push generate-vapid-keys` (podés correrlo desde el botón de "Terminal" que trae el propio Vercel, si no tenés terminal local) |
 

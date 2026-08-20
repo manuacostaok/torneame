@@ -8,7 +8,7 @@ Ver los documentos de estrategia (Bloques 1-3) para el contexto completo de nego
 - `prisma/schema.prisma` — modelo de datos completo (usuarios, torneos, inscripciones, pagos, brackets, partidos, seguidores, notificaciones, logros, comentarios).
 - `lib/brackets/` — motor de brackets con los tres formatos principales: **eliminación simple**, **eliminación doble** (winners + losers bracket + gran final, como el formato real "FT2 con looser bracket" del torneo de referencia) y **round robin/liga** con tabla de posiciones. Todo son funciones puras, testeadas en `lib/brackets/__tests__/`.
 - `auth.ts` — Auth.js con roles (jugador/organizador/admin) y un helper `requireRole()` para proteger server actions.
-- `app/actions/` — server actions: crear/publicar torneo, inscripción con Mercado Pago (comisión automática del 7%), cargar resultado de partido (conecta el motor de brackets con la base), comentarios/feedback.
+- `app/actions/` — server actions: crear/publicar torneo, inscripción por transferencia directa al organizador (comprobante + aprobación manual, ver sección de pagos más abajo), cargar resultado de partido (conecta el motor de brackets con la base), comentarios/feedback.
 - `app/page.tsx` — landing pública (mobile-first, fondo animado, ISR cada 60s).
 - `app/torneos/[slug]/page.tsx` — página pública del torneo: detalle, bracket en vivo con scroll horizontal en mobile, botón de inscripción, y sección de comentarios/feedback.
 - `app/components/AnimatedBackground.tsx` — fondo animado reutilizable, CSS puro, respeta `prefers-reduced-motion`.
@@ -108,16 +108,40 @@ arriba. Lo que queda pendiente de verdad:
    bloqueante una vez confirmada unos días en producción sin reportes
    inesperados (ver paso 9 de `DEPLOY.md`).
 
+## Pagos: inscripciones por transferencia directa, plan PRO por Mercado Pago
+
+Dos flujos de pago separados, a propósito:
+
+- **Inscripción a torneos** (jugador → organizador): NO pasa por Mercado
+  Pago ni por Torneame. El organizador carga su alias/CBU en su perfil
+  (`OrganizerProfile.paymentAlias`, editable desde `/organizador/dashboard`
+  o al crear el perfil). El jugador transfiere directo y sube el
+  comprobante (`ImageUploader` a Cloudinary) al inscribirse
+  (`app/torneos/[slug]/RegisterButton.tsx` → `registerForTournament` en
+  `app/actions/registrations.ts`), quedando en `Payment.status = PENDING`.
+  El organizador revisa el comprobante contra su cuenta desde
+  `/organizador/pagos` y aprueba o rechaza a mano (`confirmPayment`) —
+  ahí recién se confirma el lugar en el torneo. Torneame no cobra
+  comisión sobre esto ni toca esa plata en ningún momento.
+- **Plan PRO** (organizador → Torneame): sigue con Mercado Pago de
+  verdad, vía `PreApproval` (suscripción recurrente) en
+  `app/actions/plan.ts` — esto es lo único que nos paga a nosotros.
+
+El webhook de Mercado Pago (`app/api/webhooks/mercadopago/route.ts`) quedó
+angosto a propósito: ya no confirma inscripciones a torneo, solo pedidos
+de la tienda de merchandising (que sí sigue cobrándose con Mercado Pago).
+
 ## Subida de imágenes (Cloudinary)
 
 El flyer del torneo (`app/organizador/torneos/nuevo/NewTournamentWizard.tsx`)
-ya sube el archivo de verdad en vez de pedir pegar un link — usa
-`app/components/ImageUploader.tsx`, que sube directo del navegador a
-Cloudinary con un "unsigned upload preset" (el archivo nunca pasa por
+y la foto de perfil (`app/perfil/ProfileForm.tsx`) ya suben el archivo de
+verdad en vez de pedir pegar un link — usa `app/components/ImageUploader.tsx`,
+que sube directo del navegador a Cloudinary con una firma de un solo uso
+generada por `app/actions/cloudinary.ts` (el archivo nunca pasa por
 nuestro servidor, y el API secret de Cloudinary nunca se expone al
-cliente). Necesita `NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME` y
-`NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET` en el entorno — ver `.env.example`
-y el paso 4 de `DEPLOY.md` para crear el preset.
+cliente — solo la firma, que no es reversible). Necesita
+`CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY` y `CLOUDINARY_API_SECRET`
+en el entorno — ver `.env.example` y el paso 4 de `DEPLOY.md`.
 
 ## Auditoría y correcciones de esta vuelta
 

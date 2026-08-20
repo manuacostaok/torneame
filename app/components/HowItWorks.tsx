@@ -1,6 +1,6 @@
 const STEPS = [
   { title: "Elegí un torneo", desc: "Filtrá por juego, ciudad o fecha y mirá el premio y los cupos en vivo." },
-  { title: "Inscribite y pagá", desc: "Mercado Pago, sin transferencias a un WhatsApp ni comprobantes perdidos." },
+  { title: "Inscribite y pagá", desc: "Transferís directo al organizador y subís el comprobante — sin comprobantes perdidos en un chat de WhatsApp." },
   { title: "Jugá y seguí tu bracket", desc: "Resultados y cruces en vivo, desde el celular, sin esperar que alguien anuncie el próximo rival." },
 ];
 

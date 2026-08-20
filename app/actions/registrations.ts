@@ -1,21 +1,26 @@
 "use server";
 
+import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
-import { MercadoPagoConfig, Preference } from "mercadopago";
 import { isRateLimited, assertSameOrigin } from "@/lib/security";
 
-const mpClient = new MercadoPagoConfig({ accessToken: process.env.MERCADOPAGO_ACCESS_TOKEN! });
-
-// Porcentaje de comisión de la plataforma, definido en el Bloque 2 (5-8%)
-const COMMISSION_RATE = 0.07;
+const registerSchema = z.object({
+  tournamentId: z.string(),
+  // Solo hace falta si el torneo tiene costo — se valida a mano abajo,
+  // no con zod, porque depende del entryFee del torneo que recién
+  // conocemos después de buscarlo.
+  receiptImageUrl: z.string().url().optional(),
+});
 
 /**
- * Inicia una inscripción: crea el registro en estado pendiente y devuelve
- * el link de pago de Mercado Pago. El pago se confirma después vía webhook
- * (confirmPayment), nunca se marca como pagado desde el cliente.
+ * Inscribe al jugador. Si el torneo es pago, el comprobante de la
+ * transferencia (que el jugador le manda directo al alias del
+ * organizador — Torneame nunca toca esa plata) queda con el pago en
+ * estado PENDING hasta que el organizador lo revise a mano y lo
+ * apruebe o rechace desde confirmPayment().
  */
-export async function registerForTournament(tournamentId: string) {
+export async function registerForTournament(input: z.infer<typeof registerSchema>) {
   await assertSameOrigin();
   const session = await auth();
   if (!session?.user) throw new Error("Necesitás iniciar sesión para inscribirte");
@@ -25,6 +30,8 @@ export async function registerForTournament(tournamentId: string) {
   if (isRateLimited(`register:${session.user.id}`, 10, 60_000)) {
     throw new Error("Demasiados intentos. Esperá un minuto e intentá de nuevo.");
   }
+
+  const { tournamentId, receiptImageUrl } = registerSchema.parse(input);
 
   const tournament = await prisma.tournament.findUnique({
     where: { id: tournamentId },
@@ -36,6 +43,9 @@ export async function registerForTournament(tournamentId: string) {
   }
   if (tournament._count.registrations >= tournament.maxPlayers) {
     throw new Error("Ya no quedan cupos para este torneo");
+  }
+  if (Number(tournament.entryFee) > 0 && !receiptImageUrl) {
+    throw new Error("Subí el comprobante de la transferencia para inscribirte");
   }
 
   const playerProfile = await prisma.playerProfile.findUnique({
@@ -52,52 +62,46 @@ export async function registerForTournament(tournamentId: string) {
     data: { tournamentId, playerId: playerProfile.id },
   });
 
-  // Si el torneo es gratuito, se confirma directo sin pasar por Mercado Pago
+  // Torneo gratuito: no hay nada que transferir ni revisar, queda
+  // confirmado directo
   if (Number(tournament.entryFee) === 0) {
-    return { registration, paymentUrl: null };
+    return { registration, needsReview: false };
   }
 
-  const commission = Number(tournament.entryFee) * COMMISSION_RATE;
   await prisma.payment.create({
     data: {
       registrationId: registration.id,
       amount: tournament.entryFee,
-      commissionAmount: commission,
+      receiptImageUrl,
       status: "PENDING",
     },
   });
 
-  const preference = new Preference(mpClient);
-  const result = await preference.create({
-    body: {
-      items: [
-        {
-          id: tournament.id,
-          title: `Inscripción — ${tournament.name}`,
-          quantity: 1,
-          unit_price: Number(tournament.entryFee),
-        },
-      ],
-      external_reference: registration.id,
-      notification_url: `${process.env.APP_URL}/api/webhooks/mercadopago`,
-      back_urls: {
-        success: `${process.env.APP_URL}/torneos/${tournamentId}?inscripcion=exitosa`,
-        failure: `${process.env.APP_URL}/torneos/${tournamentId}?inscripcion=fallida`,
-      },
-    },
-  });
-
-  return { registration, paymentUrl: result.init_point };
+  return { registration, needsReview: true };
 }
 
 /**
- * Llamado desde el webhook de Mercado Pago (app/api/webhooks/mercadopago),
- * nunca directo desde el cliente — así no se puede falsificar un pago.
- * Es idempotente a propósito: Mercado Pago puede reenviar la misma
- * notificación más de una vez, y no queremos duplicar inscripciones ni
- * mandar notificaciones de confirmación dos veces.
+ * El organizador (o un admin) aprueba o rechaza a mano el pago después de
+ * revisar el comprobante — reemplaza al webhook de Mercado Pago que
+ * existía antes. Idempotente a propósito: si ya se procesó, no vuelve a
+ * disparar la recompensa de referido ni cambia nada.
  */
 export async function confirmPayment(registrationId: string, approved: boolean) {
+  await assertSameOrigin();
+  const session = await auth();
+  if (!session?.user) throw new Error("Necesitás iniciar sesión");
+
+  const registration = await prisma.registration.findUnique({
+    where: { id: registrationId },
+    include: { tournament: { include: { organizer: true } } },
+  });
+  if (!registration) throw new Error("Inscripción no encontrada");
+
+  const isOwner = registration.tournament.organizer.userId === session.user.id;
+  if (!isOwner && session.user.role !== "ADMIN") {
+    throw new Error("Este torneo no te pertenece");
+  }
+
   const payment = await prisma.payment.findUnique({ where: { registrationId } });
   if (!payment) throw new Error("Pago no encontrado para esta inscripción");
   if (payment.status !== "PENDING") {

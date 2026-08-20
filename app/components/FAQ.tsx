@@ -1,11 +1,11 @@
 const FAQS = [
   {
     q: "¿Cuánto cuesta usar Torneame para organizar un torneo?",
-    a: "Es gratis armarlo y publicarlo. Cobramos una comisión chica solo sobre las inscripciones que efectivamente se pagan — si no cobrás inscripción, no pagás nada.",
+    a: "Es gratis armarlo y publicarlo, y no cobramos comisión sobre las inscripciones — esa plata es 100% tuya. Solo el plan PRO (marca blanca y más) es pago, vía suscripción mensual.",
   },
   {
     q: "¿Puedo organizar un torneo presencial, no solo online?",
-    a: "Sí, es el caso de uso principal: cargás la dirección del lugar, la gente se inscribe y paga antes, y vos manejás check-in y resultados desde el celular el día del evento.",
+    a: "Sí, es el caso de uso principal: cargás la dirección del lugar, la gente se inscribe y te transfiere antes, y vos manejás check-in y resultados desde el celular el día del evento.",
   },
   {
     q: "¿Tengo que usar un juego de la lista?",
@@ -13,7 +13,7 @@ const FAQS = [
   },
   {
     q: "¿Cómo cobro las inscripciones?",
-    a: "Integrado con Mercado Pago. El jugador paga al inscribirse y el dinero te llega a vos, menos nuestra comisión.",
+    a: "Directo: cargás tu alias o CBU en tu perfil, el jugador te transfiere ahí y sube el comprobante al inscribirse. Vos lo revisás desde tu panel y confirmás su lugar — la plata pasa directo entre ustedes, nosotros no la tocamos.",
   },
 ];
 

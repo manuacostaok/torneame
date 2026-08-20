@@ -31,6 +31,7 @@ async function main() {
           orgName: "Team Coronel",
           slug: "team-coronel",
           bio: "Torneos presenciales de fighting games retro en Buenos Aires.",
+          paymentAlias: "team.coronel.mp",
           verified: true,
         },
       },
@@ -118,7 +119,6 @@ async function main() {
         registrationId: registration.id,
         amount: 15000,
         status: "APPROVED",
-        commissionAmount: 15000 * 0.07,
       },
     });
   }
