@@ -5,6 +5,7 @@ import { RegisterButton } from "./RegisterButton";
 import { CommentsSection } from "./CommentsSection";
 import { BracketView } from "./BracketView";
 import { SponsorsSection } from "./SponsorsSection";
+import { TournamentPitchGenerator } from "./TournamentPitchGenerator";
 import { calculatePrizePool } from "@/lib/prizePool";
 import { notFound } from "next/navigation";
 
@@ -45,6 +46,8 @@ export default async function TournamentPage({ params }: { params: Promise<{ slu
       <PacmanBackground />
 
       <div className="mx-auto max-w-3xl">
+        {isOwner && <TournamentPitchGenerator tournamentId={tournament.id} />}
+
         {isOwner && tournament.visibility === "PRIVATE" && tournament.accessCode && (
           <div className="mb-4 rounded-xl bg-surface-1 p-4 text-sm">
             <p className="text-secondary">

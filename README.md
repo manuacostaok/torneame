@@ -131,6 +131,27 @@ El webhook de Mercado Pago (`app/api/webhooks/mercadopago/route.ts`) quedó
 angosto a propósito: ya no confirma inscripciones a torneo, solo pedidos
 de la tienda de merchandising (que sí sigue cobrándose con Mercado Pago).
 
+## IA (Google Gemini, gratis)
+
+Dos funciones puntuales en `app/actions/ai.ts`, ambas opcionales — sin
+`GEMINI_API_KEY` configurada tiran un error controlado pero no rompen el
+resto de la app:
+
+- **Texto para compartir el torneo** — en la página pública del torneo,
+  el organizador (dueño) ve un botón que genera un mensaje listo para
+  pegar en WhatsApp/redes, con los datos reales del torneo
+  (`TournamentPitchGenerator.tsx`). Ayuda a conseguir más inscriptos sin
+  que el organizador tenga que redactarlo.
+- **Asistencia para revisar comprobantes** — en `/organizador/pagos`, un
+  botón manda la imagen del comprobante a Gemini (que lee imágenes,
+  no solo texto) para que compare el monto contra lo esperado y avise si
+  parece coincidir. Es una ayuda, no una aprobación automática — el
+  organizador sigue siendo quien aprueba o rechaza cada pago a mano.
+
+`GEMINI_API_KEY` se saca gratis en aistudio.google.com (sin tarjeta), con
+límite de pedidos por minuto/día — alcanza sobrado para un proyecto chico,
+pero no escala infinito gratis si el uso crece mucho.
+
 ## Subida de imágenes (Cloudinary)
 
 El flyer del torneo (`app/organizador/torneos/nuevo/NewTournamentWizard.tsx`)
