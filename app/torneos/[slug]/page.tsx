@@ -8,6 +8,9 @@ import { SponsorsSection } from "./SponsorsSection";
 import { TournamentPitchGenerator } from "./TournamentPitchGenerator";
 import { calculatePrizePool } from "@/lib/prizePool";
 import { notFound } from "next/navigation";
+import { JoystickLogo } from "@/app/components/JoystickLogo";
+import { NavAuthCTA } from "@/app/components/NavAuthCTA";
+import Link from "next/link";
 
 export const revalidate = 30;
 
@@ -46,6 +49,19 @@ export default async function TournamentPage({ params }: { params: Promise<{ slu
       <PacmanBackground />
 
       <div className="mx-auto max-w-3xl">
+        {/* Quien llega acá por un link compartido (WhatsApp, redes) no pasó
+            por la home — sin este header no tenía forma de volver al resto
+            del sitio ni de loguearse/crear cuenta salvo el botón atrás. */}
+        <nav className="mb-4 flex items-center justify-between">
+          <Link href="/" className="flex items-center gap-2">
+            <JoystickLogo size={24} className="text-white" />
+            <span style={{ fontFamily: "var(--font-heading)" }} className="text-base font-medium">
+              Torneame
+            </span>
+          </Link>
+          <NavAuthCTA />
+        </nav>
+
         {isOwner && <TournamentPitchGenerator tournamentId={tournament.id} />}
 
         {isOwner && tournament.visibility === "PRIVATE" && tournament.accessCode && (
@@ -123,7 +139,14 @@ export default async function TournamentPage({ params }: { params: Promise<{ slu
         {/* Bracket en vivo */}
         {tournament.bracket && (
           <div className="mt-6">
-            <p className="mb-2 text-sm text-secondary">Bracket en vivo</p>
+            <div className="mb-2 flex items-center justify-between">
+              <p className="text-sm text-secondary">Bracket en vivo</p>
+              {isOwner && (
+                <a href={`/torneos/${tournament.id}/tv`} className="text-xs text-accent">
+                  Ver en TV →
+                </a>
+              )}
+            </div>
             <BracketView structureJson={tournament.bracket.structureJson} />
           </div>
         )}
