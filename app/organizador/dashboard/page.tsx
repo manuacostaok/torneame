@@ -145,21 +145,24 @@ export default async function OrganizerDashboard() {
           <p className="mb-3 text-sm text-secondary">Torneos activos</p>
           <div className="flex flex-col gap-2">
             {activeTournaments.map((t) => (
-              <Link
+              <div
                 key={t.id}
-                href={`/torneos/${t.id}`}
-                className="flex items-center justify-between rounded-md bg-surface-1 p-3 transition hover:bg-surface-2"
+                className="flex items-center justify-between rounded-md bg-surface-1 p-3"
               >
-                <div>
-                  <p className="font-medium">{t.name}</p>
+                <Link href={`/torneos/${t.id}`} className="min-w-0">
+                  <p className="truncate font-medium">{t.name}</p>
                   <p className="text-sm text-secondary">
-                    {t._count.registrations}/{t.maxPlayers} inscriptos
+                    {t._count.registrations}/{t.maxPlayers} inscriptos ·{" "}
+                    {t.status === "IN_PROGRESS" ? "En vivo" : "Inscripción abierta"}
                   </p>
-                </div>
-                <span className="text-xs text-secondary">
-                  {t.status === "IN_PROGRESS" ? "En vivo" : "Inscripción abierta"}
-                </span>
-              </Link>
+                </Link>
+                <Link
+                  href={`/torneos/${t.id}/gestionar`}
+                  className="ml-3 flex-shrink-0 text-xs text-accent"
+                >
+                  {t.status === "IN_PROGRESS" ? "Gestionar partidos →" : "Generar bracket →"}
+                </Link>
+              </div>
             ))}
             {activeTournaments.length === 0 && (
               <p className="text-sm text-muted">No tenés torneos activos ahora.</p>

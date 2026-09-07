@@ -22,6 +22,7 @@ export default async function TournamentPage({ params }: { params: Promise<{ slu
       game: true,
       organizer: true,
       _count: { select: { registrations: true } },
+      registrations: { select: { playerId: true, player: { select: { user: { select: { name: true } } } } } },
       bracket: true,
       comments: {
         orderBy: { createdAt: "desc" },
@@ -61,6 +62,14 @@ export default async function TournamentPage({ params }: { params: Promise<{ slu
           </Link>
           <NavAuthCTA />
         </nav>
+
+        {isOwner && (
+          <div className="mb-4 flex justify-end">
+            <Link href={`/torneos/${tournament.id}/gestionar`} className="text-xs text-accent">
+              {tournament.bracket ? "Gestionar partidos →" : "Generar bracket →"}
+            </Link>
+          </div>
+        )}
 
         {isOwner && <TournamentPitchGenerator tournamentId={tournament.id} />}
 
@@ -147,7 +156,12 @@ export default async function TournamentPage({ params }: { params: Promise<{ slu
                 </a>
               )}
             </div>
-            <BracketView structureJson={tournament.bracket.structureJson} />
+            <BracketView
+              structureJson={tournament.bracket.structureJson}
+              nameMap={Object.fromEntries(
+                tournament.registrations.map((r) => [r.playerId, r.player.user.name])
+              )}
+            />
           </div>
         )}
 

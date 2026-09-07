@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { auth, isAdmin } from "@/auth";
 import { redirect, notFound } from "next/navigation";
-import { BracketStructure } from "@/lib/brackets/types";
+import { BracketMatch, StoredBracket } from "@/lib/brackets/types";
 import Link from "next/link";
 
 export const revalidate = 10; // el venue necesita que esto se sienta "en vivo"
@@ -18,7 +18,12 @@ export default async function TvBracketPage({ params }: { params: Promise<{ slug
 
   const tournament = await prisma.tournament.findUnique({
     where: { id: slug },
-    include: { bracket: true, game: true, organizer: true },
+    include: {
+      bracket: true,
+      game: true,
+      organizer: true,
+      registrations: { select: { playerId: true, player: { select: { user: { select: { name: true } } } } } },
+    },
   });
   if (!tournament) notFound();
 
@@ -53,10 +58,24 @@ export default async function TvBracketPage({ params }: { params: Promise<{ slug
     );
   }
 
-  const structure = tournament.bracket.structureJson as unknown as BracketStructure;
-  const rounds = Array.from(new Set(structure.matches.map((m) => m.round))).sort(
-    (a, b) => a - b
+  const nameMap = Object.fromEntries(
+    tournament.registrations.map((r) => [r.playerId, r.player.user.name])
   );
+  const stored = tournament.bracket.structureJson as unknown as StoredBracket;
+  const stations = Object.fromEntries(
+    (await prisma.match.findMany({
+      where: { bracketId: tournament.bracket.id, station: { not: null } },
+      select: { id: true, station: true },
+    })).map((m) => [m.id, m.station])
+  );
+
+  const sections: { title: string | null; matches: BracketMatch[]; nameMap: Record<string, string> }[] =
+    stored.kind === "groups"
+      ? [
+          ...stored.groups.map((g) => ({ title: g.name, matches: g.structure.matches, nameMap: g.playerNames })),
+          ...(stored.playoffs ? [{ title: "Playoffs", matches: stored.playoffs.matches, nameMap }] : []),
+        ]
+      : [{ title: null, matches: stored.matches, nameMap }];
 
   return (
     // Layout propio, sin nav ni footer del sitio — esto se transmite a la
@@ -72,34 +91,54 @@ export default async function TvBracketPage({ params }: { params: Promise<{ slug
         </p>
       </div>
 
-      <div className="flex gap-4 overflow-x-auto pb-4 sm:gap-8 md:gap-12">
-        {rounds.map((round) => (
-          <div
-            key={round}
-            className="flex min-w-[220px] flex-col justify-center gap-3 sm:min-w-[240px] sm:gap-4 md:min-w-[280px] md:gap-6"
-          >
-            <p className="text-center text-sm text-[#8a93a6] sm:text-base md:text-lg">
-              Ronda {round}
-            </p>
-            {structure.matches
-              .filter((m) => m.round === round)
-              .map((match) => (
-                <div
-                  key={match.id}
-                  className={`rounded-xl p-3 text-base sm:p-4 sm:text-lg md:text-xl ${
-                    match.winnerId
-                      ? "bg-[#0d3b2e]"
-                      : match.playerAId && match.playerBId
-                        ? "border-2 border-[#7c5cfc] bg-[#151a23]"
-                        : "bg-[#151a23]"
-                  }`}
-                >
-                  {match.playerAId ?? "—"} vs {match.playerBId ?? "—"}
+      {sections.map((section, i) => {
+        const display = (id: string | null) => (id ? (section.nameMap[id] ?? id) : "—");
+        const sides = Array.from(new Set(section.matches.map((m) => m.bracketSide ?? "single")));
+        return (
+          <div key={i} className="mb-10">
+            {section.title && (
+              <p className="mb-3 text-center text-lg text-[#8a93a6] sm:text-xl">{section.title}</p>
+            )}
+            {sides.map((side) => {
+              const sideMatches = section.matches.filter((m) => (m.bracketSide ?? "single") === side);
+              const rounds = Array.from(new Set(sideMatches.map((m) => m.round))).sort((a, b) => a - b);
+              return (
+                <div key={side} className="flex gap-4 overflow-x-auto pb-4 sm:gap-8 md:gap-12">
+                  {rounds.map((round) => (
+                    <div
+                      key={round}
+                      className="flex min-w-[220px] flex-col justify-center gap-3 sm:min-w-[240px] sm:gap-4 md:min-w-[280px] md:gap-6"
+                    >
+                      <p className="text-center text-sm text-[#8a93a6] sm:text-base md:text-lg">
+                        Ronda {round}
+                      </p>
+                      {sideMatches
+                        .filter((m) => m.round === round)
+                        .map((match) => (
+                          <div
+                            key={match.id}
+                            className={`rounded-xl p-3 text-base sm:p-4 sm:text-lg md:text-xl ${
+                              match.winnerId
+                                ? "bg-[#0d3b2e]"
+                                : match.playerAId && match.playerBId
+                                  ? "border-2 border-[#7c5cfc] bg-[#151a23]"
+                                  : "bg-[#151a23]"
+                            }`}
+                          >
+                            {display(match.playerAId)} vs {display(match.playerBId)}
+                            {stations[match.id] && (
+                              <p className="mt-1 text-xs text-[#8a93a6] sm:text-sm">{stations[match.id]}</p>
+                            )}
+                          </div>
+                        ))}
+                    </div>
+                  ))}
                 </div>
-              ))}
+              );
+            })}
           </div>
-        ))}
-      </div>
+        );
+      })}
     </div>
   );
 }
