@@ -7,22 +7,33 @@ import { revalidatePath } from "next/cache";
 import { isRateLimited, assertSameOrigin } from "@/lib/security";
 import { notifyFollowersOfNewTournament } from "./follows";
 
-const createTournamentSchema = z.object({
-  gameId: z.string(),
-  name: z.string().min(3, "El nombre necesita al menos 3 caracteres"),
-  description: z.string().optional(),
-  bannerImageUrl: z.string().url().optional(),
-  format: z.enum(["SINGLE_ELIMINATION", "DOUBLE_ELIMINATION", "ROUND_ROBIN", "LEAGUE", "GROUPS"]),
-  mode: z.string().min(1),
-  entryFee: z.number().min(0),
-  prizePoolBase: z.number().min(0),
-  locationType: z.enum(["ONLINE", "PRESENCIAL"]),
-  venueAddress: z.string().optional(),
-  startsAt: z.coerce.date(),
-  registrationDeadline: z.coerce.date(),
-  maxPlayers: z.number().int().min(2).max(512),
-  visibility: z.enum(["PUBLIC", "PRIVATE"]).default("PUBLIC"),
-});
+const createTournamentSchema = z
+  .object({
+    gameId: z.string().optional(),
+    // Si el juego no está en la lista, el organizador lo escribe acá — se
+    // crea (o se reutiliza si ya lo cargó otro organizador) en el mismo
+    // paso, sin depender de que un admin lo agregue antes. El FAQ del sitio
+    // ya promete "no hay una lista cerrada", así que el producto tiene que
+    // cumplirlo de verdad, no solo en el copy.
+    gameName: z.string().trim().min(2).max(60).optional(),
+    name: z.string().min(3, "El nombre necesita al menos 3 caracteres"),
+    description: z.string().optional(),
+    bannerImageUrl: z.string().url().optional(),
+    format: z.enum(["SINGLE_ELIMINATION", "DOUBLE_ELIMINATION", "ROUND_ROBIN", "LEAGUE", "GROUPS"]),
+    mode: z.string().min(1),
+    entryFee: z.number().min(0),
+    prizePoolBase: z.number().min(0),
+    locationType: z.enum(["ONLINE", "PRESENCIAL"]),
+    venueAddress: z.string().optional(),
+    startsAt: z.coerce.date(),
+    registrationDeadline: z.coerce.date(),
+    maxPlayers: z.number().int().min(2).max(512),
+    visibility: z.enum(["PUBLIC", "PRIVATE"]).default("PUBLIC"),
+  })
+  .refine((data) => Boolean(data.gameId) !== Boolean(data.gameName), {
+    message: "Elegí un juego de la lista o escribí uno nuevo, no los dos",
+    path: ["gameId"],
+  });
 
 const CODE_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // sin 0/O/1/I, para no confundir al tipearlo a mano
 
@@ -42,12 +53,25 @@ export async function createTournament(input: z.infer<typeof createTournamentSch
     throw new Error("Demasiados torneos creados en poco tiempo. Esperá un minuto.");
   }
 
-  const { visibility, ...data } = createTournamentSchema.parse(input);
+  const { visibility, gameId, gameName, ...data } = createTournamentSchema.parse(input);
 
   const organizerProfile = await prisma.organizerProfile.findUnique({
     where: { userId: session.user.id },
   });
   if (!organizerProfile) throw new Error("Completá tu perfil de organizador primero");
+
+  // Reusa el juego si ya existe (comparando sin importar mayúsculas, para
+  // que "valorant" y "Valorant" cargados por dos organizadores distintos
+  // no terminen siendo dos juegos separados en el listado); si no existe
+  // todavía, lo crea acá mismo.
+  let resolvedGameId = gameId;
+  if (!resolvedGameId && gameName) {
+    const existingGame = await prisma.game.findFirst({
+      where: { name: { equals: gameName, mode: "insensitive" } },
+    });
+    resolvedGameId = existingGame?.id ?? (await prisma.game.create({ data: { name: gameName } })).id;
+  }
+  if (!resolvedGameId) throw new Error("No se pudo determinar el juego del torneo");
 
   // Un torneo privado necesita un código único para poder encontrarlo —
   // reintenta unas pocas veces por si el random choca con uno existente
@@ -64,7 +88,14 @@ export async function createTournament(input: z.infer<typeof createTournamentSch
   }
 
   const tournament = await prisma.tournament.create({
-    data: { ...data, visibility, accessCode, organizerId: organizerProfile.id, status: "DRAFT" },
+    data: {
+      ...data,
+      gameId: resolvedGameId,
+      visibility,
+      accessCode,
+      organizerId: organizerProfile.id,
+      status: "DRAFT",
+    },
   });
 
   // Solo devolvemos lo que el cliente necesita — el objeto completo trae
