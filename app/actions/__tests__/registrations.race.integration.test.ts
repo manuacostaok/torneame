@@ -30,15 +30,19 @@ vi.mock("@/lib/security", () => ({
   isRateLimited: () => false,
 }));
 
-const mockedAuth = vi.mocked(auth);
+// auth() es una firma sobrecargada (next-auth la reutiliza para
+// middleware/route handlers), y TypeScript resuelve mockImplementation()
+// contra la sobrecarga equivocada. Para este test solo necesitamos la
+// forma simple auth() => Promise<{ user: { id } } | null>, así que se
+// castea a esa interfaz reducida a propósito.
+const mockedAuth = vi.mocked(auth) as unknown as {
+  mockImplementation: (fn: () => Promise<{ user: { id: string } } | null>) => void;
+};
 
 /** Hace que auth() devuelva un usuario distinto en cada llamada, en el orden en que se invoca (no en el que resuelve). */
 function mockAuthSequence(userIds: string[]) {
   let i = 0;
-  mockedAuth.mockImplementation(() => {
-    const id = userIds[i++];
-    return Promise.resolve({ user: { id } } as Awaited<ReturnType<typeof auth>>);
-  });
+  mockedAuth.mockImplementation(() => Promise.resolve({ user: { id: userIds[i++] } }));
 }
 
 describe.skipIf(!hasDb)("registerForTournament — race de cupos (integración real)", () => {
