@@ -6,8 +6,9 @@ import { revalidatePath } from "next/cache";
 import { isRateLimited } from "@/lib/security";
 import { notifyUserByWhatsApp } from "@/lib/notifications/whatsapp";
 import { sendPushToUser } from "@/lib/notifications/push";
+import { wrapAction } from "@/lib/actionResult";
 
-export async function followOrganizer(organizerId: string) {
+async function followOrganizer(organizerId: string) {
   const session = await auth();
   if (!session?.user) throw new Error("Necesitás iniciar sesión para seguir a un organizador");
 
@@ -24,7 +25,7 @@ export async function followOrganizer(organizerId: string) {
   revalidatePath(`/organizadores/[slug]`, "page");
 }
 
-export async function unfollowOrganizer(organizerId: string) {
+async function unfollowOrganizer(organizerId: string) {
   const session = await auth();
   if (!session?.user) throw new Error("Necesitás iniciar sesión");
 
@@ -34,6 +35,15 @@ export async function unfollowOrganizer(organizerId: string) {
 
   revalidatePath(`/organizadores/[slug]`, "page");
 }
+
+// Ver lib/actionResult.ts — Next.js reemplaza en producción el mensaje de
+// cualquier error tirado directo desde una Server Action por uno genérico.
+// notifyFollowersOfNewTournament queda afuera a propósito: nunca la llama
+// un componente cliente, solo publishTournament del lado del servidor
+// (tournaments.ts) — ahí no hay límite de Server Action que cruzar.
+const wrappedFollowOrganizer = wrapAction(followOrganizer);
+const wrappedUnfollowOrganizer = wrapAction(unfollowOrganizer);
+export { wrappedFollowOrganizer as followOrganizer, wrappedUnfollowOrganizer as unfollowOrganizer };
 
 /**
  * Se llama desde publishTournament (app/actions/tournaments.ts) — separado

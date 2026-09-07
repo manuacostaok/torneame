@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { subscribeToPush } from "@/app/actions/pushSubscriptions";
 import { useToast } from "./Toast";
+import { unwrapAction } from "@/lib/actionResult";
 
 function urlBase64ToUint8Array(base64String: string) {
   const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
@@ -34,7 +35,7 @@ export function PushNotificationOptIn() {
       applicationServerKey: urlBase64ToUint8Array(process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!),
     });
 
-    await subscribeToPush(subscription.toJSON() as never);
+    await unwrapAction(subscribeToPush(subscription.toJSON() as never));
     setStatus("on");
     toast("Notificaciones activadas", "success");
   }

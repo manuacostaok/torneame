@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { postComment, deleteComment } from "@/app/actions/comments";
 import { useToast } from "@/app/components/Toast";
+import { unwrapAction } from "@/lib/actionResult";
 
 interface CommentAuthor {
   name: string;
@@ -38,7 +39,7 @@ export function CommentsSection({
 
     startTransition(async () => {
       try {
-        const created = await postComment({ tournamentId, body: text.trim() });
+        const created = await unwrapAction(postComment({ tournamentId, body: text.trim() }));
         setComments((prev) => [created, ...prev]);
         setText("");
       } catch (err) {

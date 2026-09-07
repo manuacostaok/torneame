@@ -6,6 +6,7 @@ import { requireRole, isAdmin } from "@/auth";
 import { revalidatePath } from "next/cache";
 import { isRateLimited, assertSameOrigin } from "@/lib/security";
 import { notifyFollowersOfNewTournament } from "./follows";
+import { wrapAction } from "@/lib/actionResult";
 
 const createTournamentSchema = z
   .object({
@@ -45,7 +46,7 @@ function generateAccessCode(): string {
   return code;
 }
 
-export async function createTournament(input: z.infer<typeof createTournamentSchema>) {
+async function createTournament(input: z.infer<typeof createTournamentSchema>) {
   await assertSameOrigin();
   const session = await requireRole(["ORGANIZER", "ADMIN"]);
 
@@ -105,7 +106,7 @@ export async function createTournament(input: z.infer<typeof createTournamentSch
 }
 
 /** Busca un torneo privado por su código de acceso, para el flujo "tengo un código" del lobby. */
-export async function findTournamentByCode(code: string) {
+async function findTournamentByCode(code: string) {
   const normalized = code.trim().toUpperCase();
   if (!normalized) throw new Error("Ingresá un código");
 
@@ -118,7 +119,7 @@ export async function findTournamentByCode(code: string) {
   return tournament;
 }
 
-export async function publishTournament(tournamentId: string) {
+async function publishTournament(tournamentId: string) {
   await assertSameOrigin();
   const session = await requireRole(["ORGANIZER", "ADMIN"]);
 
@@ -145,3 +146,14 @@ export async function publishTournament(tournamentId: string) {
   revalidatePath(`/torneos/${tournamentId}`);
   return { id: tournamentId };
 }
+
+// Ver lib/actionResult.ts — Next.js reemplaza en producción el mensaje de
+// cualquier error tirado directo desde una Server Action por uno genérico.
+const wrappedCreateTournament = wrapAction(createTournament);
+const wrappedFindTournamentByCode = wrapAction(findTournamentByCode);
+const wrappedPublishTournament = wrapAction(publishTournament);
+export {
+  wrappedCreateTournament as createTournament,
+  wrappedFindTournamentByCode as findTournamentByCode,
+  wrappedPublishTournament as publishTournament,
+};

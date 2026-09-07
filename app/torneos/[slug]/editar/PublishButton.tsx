@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { publishTournament } from "@/app/actions/tournaments";
 import { useToast } from "@/app/components/Toast";
+import { unwrapAction } from "@/lib/actionResult";
 
 export function PublishButton({ tournamentId }: { tournamentId: string }) {
   const [error, setError] = useState<string | null>(null);
@@ -15,7 +16,7 @@ export function PublishButton({ tournamentId }: { tournamentId: string }) {
     setError(null);
     startTransition(async () => {
       try {
-        await publishTournament(tournamentId);
+        await unwrapAction(publishTournament(tournamentId));
         toast("¡Torneo publicado! Ya se pueden inscribir.", "success");
         router.push(`/torneos/${tournamentId}`);
       } catch (err) {

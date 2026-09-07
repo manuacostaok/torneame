@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { auth, requireRole } from "@/auth";
 import { MercadoPagoConfig, Preference } from "mercadopago";
 import { isRateLimited, assertSameOrigin } from "@/lib/security";
+import { wrapAction } from "@/lib/actionResult";
 
 const mpClient = new MercadoPagoConfig({ accessToken: process.env.MERCADOPAGO_ACCESS_TOKEN! });
 
@@ -15,7 +16,7 @@ const productSchema = z.object({
   imageUrl: z.string().url().optional(),
 });
 
-export async function createProduct(input: z.infer<typeof productSchema>) {
+async function createProduct(input: z.infer<typeof productSchema>) {
   await assertSameOrigin();
   const session = await requireRole(["ORGANIZER", "ADMIN"]);
   const data = productSchema.parse(input);
@@ -34,7 +35,7 @@ export async function createProduct(input: z.infer<typeof productSchema>) {
  * — es la misma pieza de infraestructura de pagos sirviendo un segundo
  * caso de uso, no una integración nueva desde cero.
  */
-export async function buyProduct(productId: string) {
+async function buyProduct(productId: string) {
   await assertSameOrigin();
   const session = await auth();
   if (!session?.user) throw new Error("Necesitás iniciar sesión para comprar");
@@ -65,3 +66,9 @@ export async function buyProduct(productId: string) {
 
   return { orderId: order.id, checkoutUrl: result.init_point };
 }
+
+// Ver lib/actionResult.ts — Next.js reemplaza en producción el mensaje de
+// cualquier error tirado directo desde una Server Action por uno genérico.
+const wrappedCreateProduct = wrapAction(createProduct);
+const wrappedBuyProduct = wrapAction(buyProduct);
+export { wrappedCreateProduct as createProduct, wrappedBuyProduct as buyProduct };

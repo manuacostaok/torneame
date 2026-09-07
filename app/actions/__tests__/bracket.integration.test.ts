@@ -4,6 +4,7 @@ import { auth } from "@/auth";
 import { startTournament } from "../bracket";
 import { reportMatchResult, disqualifyPlayer } from "../matches";
 import { StoredBracket } from "@/lib/brackets/types";
+import { unwrapAction } from "@/lib/actionResult";
 
 // Igual que registrations.race.integration.test.ts: esto ejercita Prisma
 // de verdad (transacciones, createMany, JSON) contra una Postgres real —
@@ -95,7 +96,7 @@ describe.skipIf(!hasDb)("startTournament + reportMatchResult (integración real)
   it("genera el bracket con Match rows reales y el torneo pasa a IN_PROGRESS", async () => {
     mockedAuth.mockResolvedValue({ user: { id: organizerUserId, role: "ORGANIZER" } });
 
-    const { bracketId } = await startTournament(tournamentId);
+    const { bracketId } = await unwrapAction(startTournament(tournamentId));
 
     const tournament = await prisma.tournament.findUniqueOrThrow({ where: { id: tournamentId } });
     expect(tournament.status).toBe("IN_PROGRESS");
@@ -115,7 +116,7 @@ describe.skipIf(!hasDb)("startTournament + reportMatchResult (integración real)
     const round1Match = stored.matches.find((m) => m.round === 1 && m.playerAId && m.playerBId)!;
     const winnerId = round1Match.playerAId!;
 
-    await reportMatchResult(round1Match.id, winnerId, 2, 0);
+    await unwrapAction(reportMatchResult(round1Match.id, winnerId, 2, 0));
 
     const updatedBracket = await prisma.bracket.findUniqueOrThrow({ where: { tournamentId } });
     const updatedStored = updatedBracket.structureJson as unknown as StoredBracket;
@@ -143,7 +144,7 @@ describe.skipIf(!hasDb)("startTournament + reportMatchResult (integración real)
     const dqPlayerId = remainingRound1.playerAId!;
     const expectedWinnerId = remainingRound1.playerBId!;
 
-    await disqualifyPlayer(remainingRound1.id, dqPlayerId);
+    await unwrapAction(disqualifyPlayer(remainingRound1.id, dqPlayerId));
 
     const row = await prisma.match.findUniqueOrThrow({ where: { id: remainingRound1.id } });
     expect(row.winnerId).toBe(expectedWinnerId);

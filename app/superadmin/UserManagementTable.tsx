@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { setUserRole, setUserSuspended, searchUsers } from "@/app/actions/superadmin";
 import { useToast } from "@/app/components/Toast";
+import { unwrapAction } from "@/lib/actionResult";
 
 interface UserRow {
   id: string;
@@ -25,7 +26,7 @@ export function UserManagementTable({ initialUsers }: { initialUsers: UserRow[] 
     e.preventDefault();
     startSearch(async () => {
       try {
-        const results = await searchUsers(query);
+        const results = await unwrapAction(searchUsers(query));
         setUsers(results);
       } catch (err) {
         toast(err instanceof Error ? err.message : "No se pudo buscar", "error");
@@ -73,7 +74,7 @@ function UserRow({ user }: { user: UserRow }) {
     setRole(newRole);
     startTransition(async () => {
       try {
-        await setUserRole(user.id, newRole as (typeof ROLES)[number]);
+        await unwrapAction(setUserRole(user.id, newRole as (typeof ROLES)[number]));
         toast(`${user.name} ahora es ${newRole}`, "success");
       } catch (err) {
         setRole(previous);
@@ -86,7 +87,7 @@ function UserRow({ user }: { user: UserRow }) {
     const next = !suspended;
     startTransition(async () => {
       try {
-        await setUserSuspended(user.id, next);
+        await unwrapAction(setUserSuspended(user.id, next));
         setSuspended(next);
         toast(next ? `${user.name} suspendido` : `${user.name} restaurado`, "success");
       } catch (err) {

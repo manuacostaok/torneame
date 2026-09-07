@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { requireRole, isAdmin } from "@/auth";
 import { revalidatePath } from "next/cache";
 import { assertSameOrigin } from "@/lib/security";
+import { wrapAction } from "@/lib/actionResult";
 
 const sponsorSchema = z.object({
   tournamentId: z.string(),
@@ -14,7 +15,7 @@ const sponsorSchema = z.object({
   tier: z.enum(["BASIC", "FEATURED"]).default("BASIC"),
 });
 
-export async function addSponsor(input: z.infer<typeof sponsorSchema>) {
+async function addSponsor(input: z.infer<typeof sponsorSchema>) {
   await assertSameOrigin();
   const session = await requireRole(["ORGANIZER", "ADMIN"]);
   const data = sponsorSchema.parse(input);
@@ -33,7 +34,7 @@ export async function addSponsor(input: z.infer<typeof sponsorSchema>) {
   return sponsor;
 }
 
-export async function removeSponsor(sponsorId: string) {
+async function removeSponsor(sponsorId: string) {
   const session = await requireRole(["ORGANIZER", "ADMIN"]);
 
   const sponsor = await prisma.sponsor.findUnique({
@@ -48,3 +49,9 @@ export async function removeSponsor(sponsorId: string) {
   await prisma.sponsor.delete({ where: { id: sponsorId } });
   revalidatePath(`/torneos/${sponsor.tournamentId}`);
 }
+
+// Ver lib/actionResult.ts — Next.js reemplaza en producción el mensaje de
+// cualquier error tirado directo desde una Server Action por uno genérico.
+const wrappedAddSponsor = wrapAction(addSponsor);
+const wrappedRemoveSponsor = wrapAction(removeSponsor);
+export { wrappedAddSponsor as addSponsor, wrappedRemoveSponsor as removeSponsor };

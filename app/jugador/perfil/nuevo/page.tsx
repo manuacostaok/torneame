@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createPlayerProfile } from "@/app/actions/auth";
 import { useToast } from "@/app/components/Toast";
+import { unwrapAction } from "@/lib/actionResult";
 
 export default function NewPlayerProfilePage() {
   const [gamertag, setGamertag] = useState("");
@@ -15,7 +16,7 @@ export default function NewPlayerProfilePage() {
     e.preventDefault();
     setLoading(true);
     try {
-      await createPlayerProfile({ gamertag });
+      await unwrapAction(createPlayerProfile({ gamertag }));
       toast("¡Listo!", "success");
       router.push("/jugador/dashboard");
     } catch (err) {

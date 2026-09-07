@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { requireRole } from "@/auth";
 import { assertSameOrigin } from "@/lib/security";
 import { MercadoPagoConfig, PreApproval } from "mercadopago";
+import { wrapAction } from "@/lib/actionResult";
 
 const mpClient = new MercadoPagoConfig({ accessToken: process.env.MERCADOPAGO_ACCESS_TOKEN! });
 
@@ -19,7 +20,7 @@ const PRO_MONTHLY_PRICE_ARS = 12000;
  * activamos algo pago por lo que dice el cliente, solo por lo que
  * confirma Mercado Pago del lado del servidor.
  */
-export async function startProSubscription() {
+async function startProSubscription() {
   await assertSameOrigin();
   const session = await requireRole(["ORGANIZER"]);
 
@@ -59,7 +60,7 @@ export async function activateProPlan(organizerId: string) {
   });
 }
 
-export async function setCustomDomain(customDomain: string) {
+async function setCustomDomain(customDomain: string) {
   const session = await requireRole(["ORGANIZER"]);
   const organizer = await prisma.organizerProfile.findUnique({
     where: { userId: session.user.id },
@@ -80,3 +81,15 @@ function addOneMonth(date: Date) {
   result.setMonth(result.getMonth() + 1);
   return result;
 }
+
+// Ver lib/actionResult.ts — Next.js reemplaza en producción el mensaje de
+// cualquier error tirado directo desde una Server Action por uno genérico.
+// activateProPlan queda afuera a propósito: la llama el webhook de
+// Mercado Pago (una Route Handler, no un componente cliente), no hay
+// límite de Server Action que cruzar ahí.
+const wrappedStartProSubscription = wrapAction(startProSubscription);
+const wrappedSetCustomDomain = wrapAction(setCustomDomain);
+export {
+  wrappedStartProSubscription as startProSubscription,
+  wrappedSetCustomDomain as setCustomDomain,
+};

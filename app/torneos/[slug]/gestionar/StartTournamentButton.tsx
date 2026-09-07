@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { startTournament } from "@/app/actions/bracket";
 import { useToast } from "@/app/components/Toast";
+import { unwrapAction } from "@/lib/actionResult";
 
 export function StartTournamentButton({ tournamentId }: { tournamentId: string }) {
   const [error, setError] = useState<string | null>(null);
@@ -15,7 +16,7 @@ export function StartTournamentButton({ tournamentId }: { tournamentId: string }
     setError(null);
     startTransition(async () => {
       try {
-        await startTournament(tournamentId);
+        await unwrapAction(startTournament(tournamentId));
         toast("¡Bracket generado! Ya se pueden cargar resultados.", "success");
         router.refresh();
       } catch (err) {

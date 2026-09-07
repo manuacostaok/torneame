@@ -3,6 +3,7 @@
 import { useTransition } from "react";
 import { buyProduct } from "@/app/actions/products";
 import { useToast } from "@/app/components/Toast";
+import { unwrapAction } from "@/lib/actionResult";
 
 export function BuyProductButton({ productId }: { productId: string }) {
   const [isPending, startTransition] = useTransition();
@@ -11,7 +12,7 @@ export function BuyProductButton({ productId }: { productId: string }) {
   function handleClick() {
     startTransition(async () => {
       try {
-        const { checkoutUrl } = await buyProduct(productId);
+        const { checkoutUrl } = await unwrapAction(buyProduct(productId));
         if (checkoutUrl) window.location.href = checkoutUrl;
       } catch (err) {
         toast(err instanceof Error ? err.message : "No se pudo procesar la compra", "error");

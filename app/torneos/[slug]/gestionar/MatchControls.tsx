@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { callMatch, disqualifyPlayer, reportMatchResult, setMatchStation } from "@/app/actions/matches";
 import { useToast } from "@/app/components/Toast";
 import { DQCountdown } from "@/app/components/DQCountdown";
+import { ActionResult, unwrapAction } from "@/lib/actionResult";
 
 interface PendingReport {
   scoreA: number;
@@ -35,10 +36,10 @@ export function MatchControls(props: MatchControlsProps) {
   const router = useRouter();
   const toast = useToast();
 
-  function run(action: () => Promise<unknown>, successMessage?: string) {
+  function run(action: () => Promise<ActionResult<unknown>>, successMessage?: string) {
     startTransition(async () => {
       try {
-        await action();
+        await unwrapAction(action());
         if (successMessage) toast(successMessage, "success");
         router.refresh();
       } catch (err) {

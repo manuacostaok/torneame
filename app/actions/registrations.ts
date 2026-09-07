@@ -4,6 +4,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { auth, isAdmin } from "@/auth";
 import { isRateLimited, assertSameOrigin } from "@/lib/security";
+import { wrapAction } from "@/lib/actionResult";
 
 const registerSchema = z.object({
   tournamentId: z.string(),
@@ -20,7 +21,7 @@ const registerSchema = z.object({
  * estado PENDING hasta que el organizador lo revise a mano y lo
  * apruebe o rechace desde confirmPayment().
  */
-export async function registerForTournament(input: z.infer<typeof registerSchema>) {
+async function registerForTournament(input: z.infer<typeof registerSchema>) {
   await assertSameOrigin();
   const session = await auth();
   if (!session?.user) throw new Error("Necesitás iniciar sesión para inscribirte");
@@ -101,7 +102,7 @@ export async function registerForTournament(input: z.infer<typeof registerSchema
  * existía antes. Idempotente a propósito: si ya se procesó, no vuelve a
  * disparar la recompensa de referido ni cambia nada.
  */
-export async function confirmPayment(registrationId: string, approved: boolean) {
+async function confirmPayment(registrationId: string, approved: boolean) {
   await assertSameOrigin();
   const session = await auth();
   if (!session?.user) throw new Error("Necesitás iniciar sesión");
@@ -177,3 +178,12 @@ async function rewardReferrerOnFirstPayment(registrationId: string) {
     });
   });
 }
+
+// Ver lib/actionResult.ts — Next.js reemplaza en producción el mensaje de
+// cualquier error tirado directo desde una Server Action por uno genérico.
+const wrappedRegisterForTournament = wrapAction(registerForTournament);
+const wrappedConfirmPayment = wrapAction(confirmPayment);
+export {
+  wrappedRegisterForTournament as registerForTournament,
+  wrappedConfirmPayment as confirmPayment,
+};

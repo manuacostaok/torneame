@@ -8,6 +8,7 @@ import { reportMatchResult as reportMatchResultInEngine } from "@/lib/brackets/s
 import { dropToLosers } from "@/lib/brackets/doubleElimination";
 import { revalidatePath } from "next/cache";
 import { BracketStructure, StoredBracket } from "@/lib/brackets/types";
+import { wrapAction } from "@/lib/actionResult";
 
 /** Localiza un partido dentro de la estructura guardada (bracket suelto, o dentro de la fase de grupos/playoffs) y devuelve cómo reescribirlo sin tocar el resto. */
 function locateMatch(
@@ -60,7 +61,7 @@ function assertIsOwnerOrAdmin(organizerUserId: string, sessionUserId: string, se
  * otro partido que haya cambiado como efecto de esta propagación (el
  * partido siguiente, o el del losers bracket) — no solo el reportado.
  */
-export async function reportMatchResult(
+async function reportMatchResult(
   matchId: string,
   winnerId: string,
   scoreA: number,
@@ -141,7 +142,7 @@ export async function reportMatchResult(
  * Reusa reportMatchResult entero (misma propagación, mismo drop a losers
  * en eliminación doble) en vez de duplicar la lógica.
  */
-export async function disqualifyPlayer(matchId: string, disqualifiedPlayerId: string) {
+async function disqualifyPlayer(matchId: string, disqualifiedPlayerId: string) {
   await assertSameOrigin();
   const session = await requireRole(["ORGANIZER", "ADMIN"]);
   const matchRow = await loadMatchWithTournament(matchId);
@@ -171,7 +172,7 @@ export async function disqualifyPlayer(matchId: string, disqualifiedPlayerId: st
  * app/torneos/[slug]/mi-entrada). No confirma resultado ni toca el
  * bracket, solo marca el partido como en curso.
  */
-export async function callMatch(matchId: string) {
+async function callMatch(matchId: string) {
   await assertSameOrigin();
   const session = await requireRole(["ORGANIZER", "ADMIN"]);
   const matchRow = await loadMatchWithTournament(matchId);
@@ -185,7 +186,7 @@ export async function callMatch(matchId: string) {
 }
 
 /** Le pone (o le cambia) el número de mesa/estación a un partido — texto libre. */
-export async function setMatchStation(matchId: string, station: string) {
+async function setMatchStation(matchId: string, station: string) {
   await assertSameOrigin();
   const session = await requireRole(["ORGANIZER", "ADMIN"]);
   const matchRow = await loadMatchWithTournament(matchId);
@@ -208,7 +209,7 @@ export async function setMatchStation(matchId: string, station: string) {
  * otro reporte, queda guardado en pendingReports para que el organizador
  * lo vea y destrabe a mano.
  */
-export async function submitPlayerReport(matchId: string, scoreA: number, scoreB: number) {
+async function submitPlayerReport(matchId: string, scoreA: number, scoreB: number) {
   await assertSameOrigin();
   const session = await auth();
   if (!session?.user) throw new Error("Necesitás iniciar sesión");
@@ -253,3 +254,21 @@ export async function submitPlayerReport(matchId: string, scoreA: number, scoreB
 
   return { disputed: Boolean(otherReport) };
 }
+
+// Ver lib/actionResult.ts — Next.js reemplaza en producción el mensaje de
+// cualquier error tirado directo desde una Server Action por uno genérico.
+// Se exportan solo las versiones envueltas, con el mismo nombre público de
+// siempre (los call sites del cliente no cambian el import, solo envuelven
+// el llamado con unwrapAction).
+const wrappedReportMatchResult = wrapAction(reportMatchResult);
+const wrappedDisqualifyPlayer = wrapAction(disqualifyPlayer);
+const wrappedCallMatch = wrapAction(callMatch);
+const wrappedSetMatchStation = wrapAction(setMatchStation);
+const wrappedSubmitPlayerReport = wrapAction(submitPlayerReport);
+export {
+  wrappedReportMatchResult as reportMatchResult,
+  wrappedDisqualifyPlayer as disqualifyPlayer,
+  wrappedCallMatch as callMatch,
+  wrappedSetMatchStation as setMatchStation,
+  wrappedSubmitPlayerReport as submitPlayerReport,
+};

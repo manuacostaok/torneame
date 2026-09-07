@@ -110,19 +110,21 @@ describe.skipIf(!hasDb)("registerForTournament — race de cupos (integración r
   it(`deja pasar exactamente maxPlayers (${MAX_PLAYERS}) de ${CONCURRENT_PLAYERS} inscripciones simultáneas`, async () => {
     mockAuthSequence(playerUserIds);
 
-    const results = await Promise.allSettled(
+    // registerForTournament ya no tira: devuelve { ok, data|error } (ver
+    // lib/actionResult.ts — Next.js redacta en producción el mensaje de
+    // cualquier error tirado directo desde una Server Action), así que acá
+    // se revisa el resultado en vez de fulfilled/rejected.
+    const results = await Promise.all(
       playerUserIds.map(() => registerForTournament({ tournamentId }))
     );
 
-    const fulfilled = results.filter((r) => r.status === "fulfilled");
-    const rejected = results.filter(
-      (r): r is PromiseRejectedResult => r.status === "rejected"
-    );
+    const succeeded = results.filter((r) => r.ok);
+    const failed = results.filter((r) => !r.ok);
 
-    expect(fulfilled).toHaveLength(MAX_PLAYERS);
-    expect(rejected).toHaveLength(CONCURRENT_PLAYERS - MAX_PLAYERS);
-    for (const r of rejected) {
-      expect((r.reason as Error).message).toBe("Ya no quedan cupos para este torneo");
+    expect(succeeded).toHaveLength(MAX_PLAYERS);
+    expect(failed).toHaveLength(CONCURRENT_PLAYERS - MAX_PLAYERS);
+    for (const r of failed) {
+      if (!r.ok) expect(r.error).toBe("Ya no quedan cupos para este torneo");
     }
 
     const finalCount = await prisma.registration.count({ where: { tournamentId } });

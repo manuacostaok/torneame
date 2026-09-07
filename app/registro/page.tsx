@@ -6,6 +6,7 @@ import { signIn } from "next-auth/react";
 import { registerUser } from "@/app/actions/auth";
 import { LoginModal } from "@/app/components/LoginModal";
 import { useToast } from "@/app/components/Toast";
+import { unwrapAction } from "@/lib/actionResult";
 
 export default function RegisterPage() {
   return (
@@ -32,7 +33,7 @@ function RegisterForm() {
     setLoading(true);
 
     try {
-      await registerUser({ name, email, password, role });
+      await unwrapAction(registerUser({ name, email, password, role }));
 
       // Auto-login: no tiene sentido pedirle a alguien que se acaba de
       // registrar que vuelva a escribir el email y la contraseña en la

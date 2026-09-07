@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import { getCloudinaryUploadSignature } from "@/app/actions/cloudinary";
+import { unwrapAction } from "@/lib/actionResult";
 
 // Subida directa del navegador a Cloudinary — el archivo nunca pasa por
 // nuestro servidor (evita el límite de tamaño de body de las funciones
@@ -35,7 +36,7 @@ export function ImageUploader({ value, onChange, label }: ImageUploaderProps) {
 
     setIsUploading(true);
     try {
-      const { timestamp, signature, apiKey, cloudName } = await getCloudinaryUploadSignature();
+      const { timestamp, signature, apiKey, cloudName } = await unwrapAction(getCloudinaryUploadSignature());
       if (!apiKey || !cloudName) {
         throw new Error("Falta configurar Cloudinary (ver .env.example)");
       }

@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { requireRole } from "@/auth";
 import { assertSameOrigin } from "@/lib/security";
 import { revalidatePath } from "next/cache";
+import { wrapAction } from "@/lib/actionResult";
 
 /**
  * Le da (o saca) el plan PRO a un organizador a mano, sin pasar por
@@ -13,7 +14,7 @@ import { revalidatePath } from "next/cache";
  * un admin no debería tener que simular una suscripción de Mercado Pago
  * solo para regalarle el plan a alguien.
  */
-export async function adminSetOrganizerPlan(organizerId: string, plan: "FREE" | "PRO") {
+async function adminSetOrganizerPlan(organizerId: string, plan: "FREE" | "PRO") {
   await assertSameOrigin();
   await requireRole(["ADMIN"]);
 
@@ -28,7 +29,7 @@ export async function adminSetOrganizerPlan(organizerId: string, plan: "FREE" | 
   revalidatePath("/admin");
 }
 
-export async function adminVerifyOrganizer(organizerId: string, verified: boolean) {
+async function adminVerifyOrganizer(organizerId: string, verified: boolean) {
   await assertSameOrigin();
   await requireRole(["ADMIN"]);
 
@@ -36,7 +37,7 @@ export async function adminVerifyOrganizer(organizerId: string, verified: boolea
   revalidatePath("/admin");
 }
 
-export async function adminDeleteComment(commentId: string) {
+async function adminDeleteComment(commentId: string) {
   await assertSameOrigin();
   await requireRole(["ADMIN"]);
 
@@ -49,3 +50,14 @@ function addOneYear(date: Date) {
   result.setFullYear(result.getFullYear() + 1);
   return result;
 }
+
+// Ver lib/actionResult.ts — Next.js reemplaza en producción el mensaje de
+// cualquier error tirado directo desde una Server Action por uno genérico.
+const wrappedAdminSetOrganizerPlan = wrapAction(adminSetOrganizerPlan);
+const wrappedAdminVerifyOrganizer = wrapAction(adminVerifyOrganizer);
+const wrappedAdminDeleteComment = wrapAction(adminDeleteComment);
+export {
+  wrappedAdminSetOrganizerPlan as adminSetOrganizerPlan,
+  wrappedAdminVerifyOrganizer as adminVerifyOrganizer,
+  wrappedAdminDeleteComment as adminDeleteComment,
+};

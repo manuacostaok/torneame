@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { followOrganizer, unfollowOrganizer } from "@/app/actions/follows";
 import { useToast } from "@/app/components/Toast";
+import { unwrapAction } from "@/lib/actionResult";
 
 export function FollowButton({
   organizerId,
@@ -28,9 +29,9 @@ export function FollowButton({
     startTransition(async () => {
       try {
         if (next) {
-          await followOrganizer(organizerId);
+          await unwrapAction(followOrganizer(organizerId));
         } else {
-          await unfollowOrganizer(organizerId);
+          await unwrapAction(unfollowOrganizer(organizerId));
         }
       } catch (err) {
         setFollowing(!next);

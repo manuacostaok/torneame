@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { createTournament } from "@/app/actions/tournaments";
 import { useToast } from "@/app/components/Toast";
 import { ImageUploader } from "@/app/components/ImageUploader";
+import { unwrapAction } from "@/lib/actionResult";
 
 interface Game {
   id: string;
@@ -107,7 +108,7 @@ export function NewTournamentWizard({ games }: { games: Game[] }) {
     startTransition(async () => {
       try {
         const isCustomGame = form.gameId === CUSTOM_GAME_VALUE;
-        const tournament = await createTournament({
+        const tournament = await unwrapAction(createTournament({
           ...(isCustomGame
             ? { gameName: form.customGameName.trim() }
             : { gameId: form.gameId }),
@@ -124,7 +125,7 @@ export function NewTournamentWizard({ games }: { games: Game[] }) {
           registrationDeadline: new Date(form.registrationDeadline),
           maxPlayers: Number(form.maxPlayers),
           visibility: form.visibility,
-        });
+        }));
         // A publicar, no a la página pública — el torneo queda en
         // borrador hasta publicarlo, y ahí no se puede ni inscribir gente
         // ni verlo en los listados. Mandar directo a /torneos/[id] dejaba

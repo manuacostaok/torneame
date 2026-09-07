@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { registerForTournament } from "@/app/actions/registrations";
 import { ImageUploader } from "@/app/components/ImageUploader";
 import { useToast } from "@/app/components/Toast";
+import { unwrapAction } from "@/lib/actionResult";
 
 interface RegisterButtonProps {
   tournamentId: string;
@@ -30,7 +31,7 @@ export function RegisterButton({
   function submit(receiptImageUrl?: string) {
     startTransition(async () => {
       try {
-        const result = await registerForTournament({ tournamentId, receiptImageUrl });
+        const result = await unwrapAction(registerForTournament({ tournamentId, receiptImageUrl }));
         if (result.needsReview) {
           toast("¡Comprobante recibido! El organizador lo va a revisar y confirmar.", "success");
         } else {

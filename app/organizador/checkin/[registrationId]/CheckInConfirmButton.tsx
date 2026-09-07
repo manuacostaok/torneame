@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { checkInRegistration } from "@/app/actions/checkin";
 import { useToast } from "@/app/components/Toast";
+import { unwrapAction } from "@/lib/actionResult";
 
 export function CheckInConfirmButton({ registrationId }: { registrationId: string }) {
   const [done, setDone] = useState(false);
@@ -12,7 +13,7 @@ export function CheckInConfirmButton({ registrationId }: { registrationId: strin
   function handleClick() {
     startTransition(async () => {
       try {
-        await checkInRegistration(registrationId);
+        await unwrapAction(checkInRegistration(registrationId));
         setDone(true);
         toast("Check-in confirmado", "success");
       } catch (err) {

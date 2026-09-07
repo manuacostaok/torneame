@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { submitPlayerReport } from "@/app/actions/matches";
 import { useToast } from "@/app/components/Toast";
 import { DQCountdown } from "@/app/components/DQCountdown";
+import { unwrapAction } from "@/lib/actionResult";
 
 export function PlayerMatchCard({
   matchId,
@@ -43,7 +44,7 @@ export function PlayerMatchCard({
     const scoreB = isPlayerA ? opp : my;
     startTransition(async () => {
       try {
-        const result = await submitPlayerReport(matchId, scoreA, scoreB);
+        const result = await unwrapAction(submitPlayerReport(matchId, scoreA, scoreB));
         setSubmitted(true);
         if (result && "disputed" in result && result.disputed) {
           toast("Tu reporte no coincide con el del rival — el organizador lo va a resolver", "info");

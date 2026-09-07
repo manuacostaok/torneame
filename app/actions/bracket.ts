@@ -12,6 +12,7 @@ import { createGroupsPhase, buildPlayoffsFromGroups } from "@/lib/brackets/group
 import { namespaceMatchIds } from "@/lib/brackets/namespace";
 import { orderPlayersForSeeding } from "@/lib/brackets/seed";
 import { BracketMatch, BracketStructure, StoredBracket, StoredGroupsStructure } from "@/lib/brackets/types";
+import { wrapAction } from "@/lib/actionResult";
 
 /** Junta todos los BracketMatch de una estructura persistible en una sola lista plana, para crear las filas de Match. */
 function flattenMatches(stored: StoredBracket): BracketMatch[] {
@@ -29,7 +30,7 @@ function flattenMatches(stored: StoredBracket): BracketMatch[] {
  * "el bracket se arma solo" (la promesa central del producto) no pasaba
  * de la letra del pitch.
  */
-export async function startTournament(tournamentId: string) {
+async function startTournament(tournamentId: string) {
   await assertSameOrigin();
   const session = await requireRole(["ORGANIZER", "ADMIN"]);
 
@@ -153,7 +154,7 @@ export async function startTournament(tournamentId: string) {
  * termina la fase de grupos, no cuando arranca) — mismo criterio que ya
  * usa buildPlayoffsFromGroups en lib/brackets/groups.ts.
  */
-export async function advanceGroupsToPlayoffs(tournamentId: string) {
+async function advanceGroupsToPlayoffs(tournamentId: string) {
   await assertSameOrigin();
   const session = await requireRole(["ORGANIZER", "ADMIN"]);
 
@@ -222,3 +223,13 @@ export async function advanceGroupsToPlayoffs(tournamentId: string) {
   revalidatePath(`/torneos/${tournamentId}`);
   revalidatePath(`/torneos/${tournamentId}/tv`);
 }
+
+// Ver lib/actionResult.ts: Next.js reemplaza en producción el mensaje de
+// cualquier error tirado directo desde una Server Action por uno genérico
+// — wrapAction lo evita devolviéndolo como dato en vez de como excepción.
+// Se exportan solo las versiones envueltas, con el mismo nombre público
+// de siempre (los call sites del cliente no cambian el import, solo
+// envuelven el llamado con unwrapAction).
+const wrappedStartTournament = wrapAction(startTournament);
+const wrappedAdvanceGroupsToPlayoffs = wrapAction(advanceGroupsToPlayoffs);
+export { wrappedStartTournament as startTournament, wrappedAdvanceGroupsToPlayoffs as advanceGroupsToPlayoffs };

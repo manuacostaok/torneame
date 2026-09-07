@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { auth, isAdmin } from "@/auth";
 import { revalidatePath } from "next/cache";
 import { isRateLimited } from "@/lib/security";
+import { wrapAction } from "@/lib/actionResult";
 
 const commentSchema = z.object({
   tournamentId: z.string(),
@@ -17,7 +18,7 @@ const commentSchema = z.object({
     .max(500, "Máximo 500 caracteres"),
 });
 
-export async function postComment(input: z.infer<typeof commentSchema>) {
+async function postComment(input: z.infer<typeof commentSchema>) {
   const session = await auth();
   if (!session?.user) throw new Error("Necesitás iniciar sesión para comentar");
 
@@ -37,7 +38,7 @@ export async function postComment(input: z.infer<typeof commentSchema>) {
   return comment;
 }
 
-export async function deleteComment(commentId: string) {
+async function deleteComment(commentId: string) {
   const session = await auth();
   if (!session?.user) throw new Error("Necesitás iniciar sesión");
 
@@ -50,3 +51,9 @@ export async function deleteComment(commentId: string) {
   await prisma.comment.delete({ where: { id: commentId } });
   revalidatePath(`/torneos/${comment.tournamentId}`);
 }
+
+// Ver lib/actionResult.ts — Next.js reemplaza en producción el mensaje de
+// cualquier error tirado directo desde una Server Action por uno genérico.
+const wrappedPostComment = wrapAction(postComment);
+const wrappedDeleteComment = wrapAction(deleteComment);
+export { wrappedPostComment as postComment, wrappedDeleteComment as deleteComment };

@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { confirmPayment } from "@/app/actions/registrations";
 import { analyzePaymentReceipt } from "@/app/actions/ai";
 import { useToast } from "@/app/components/Toast";
+import { unwrapAction } from "@/lib/actionResult";
 
 interface PaymentReviewCardProps {
   registrationId: string;
@@ -38,7 +39,7 @@ export function PaymentReviewCard({
   function handleDecide(approved: boolean) {
     startTransition(async () => {
       try {
-        await confirmPayment(registrationId, approved);
+        await unwrapAction(confirmPayment(registrationId, approved));
         setResolved(approved ? "approved" : "rejected");
         toast(approved ? "Inscripción confirmada" : "Inscripción rechazada", "success");
       } catch (err) {
@@ -50,7 +51,7 @@ export function PaymentReviewCard({
   function handleAiCheck() {
     startCheck(async () => {
       try {
-        const result = await analyzePaymentReceipt(registrationId);
+        const result = await unwrapAction(analyzePaymentReceipt(registrationId));
         setAiCheck(result);
       } catch (err) {
         toast(err instanceof Error ? err.message : "No se pudo revisar con IA", "error");

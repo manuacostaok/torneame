@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { advanceGroupsToPlayoffs } from "@/app/actions/bracket";
 import { useToast } from "@/app/components/Toast";
+import { unwrapAction } from "@/lib/actionResult";
 
 export function AdvancePlayoffsButton({
   tournamentId,
@@ -21,7 +22,7 @@ export function AdvancePlayoffsButton({
     setError(null);
     startTransition(async () => {
       try {
-        await advanceGroupsToPlayoffs(tournamentId);
+        await unwrapAction(advanceGroupsToPlayoffs(tournamentId));
         toast("¡Playoffs armados!", "success");
         router.refresh();
       } catch (err) {
