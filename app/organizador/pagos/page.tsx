@@ -7,12 +7,17 @@ import { PaymentReviewCard } from "./PaymentReviewCard";
 export default async function OrganizerPaymentsPage() {
   const session = await auth();
   if (!session?.user) redirect("/login?redirect=/organizador/pagos");
-  if (session.user.role !== "ORGANIZER" && !isAdmin(session.user.role)) redirect("/");
 
   const organizer = await prisma.organizerProfile.findUnique({
     where: { userId: session.user.id },
   });
-  if (!organizer) redirect("/organizador/perfil/nuevo");
+  // El perfil en la base manda sobre el rol del JWT (ver mismo comentario
+  // en app/organizador/dashboard/page.tsx) para no expulsar a la home a un
+  // organizador recién promovido cuya sesión todavía no se refrescó.
+  if (!organizer) {
+    if (session.user.role !== "ORGANIZER" && !isAdmin(session.user.role)) redirect("/");
+    redirect("/organizador/perfil/nuevo");
+  }
 
   const registrations = await prisma.registration.findMany({
     where: {

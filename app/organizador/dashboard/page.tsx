@@ -10,7 +10,6 @@ import Link from "next/link";
 export default async function OrganizerDashboard() {
   const session = await auth();
   if (!session?.user) redirect("/login?redirect=/organizador/dashboard");
-  if (session.user.role !== "ORGANIZER" && !isAdmin(session.user.role)) redirect("/");
 
   const organizer = await prisma.organizerProfile.findUnique({
     where: { userId: session.user.id },
@@ -25,7 +24,18 @@ export default async function OrganizerDashboard() {
     },
   });
 
-  if (!organizer) redirect("/organizador/perfil/nuevo");
+  // El perfil de organizador en la base es la fuente de verdad, no el rol
+  // del JWT: justo después de promoverse de PLAYER a ORGANIZER (ver
+  // app/organizador/perfil/nuevo), la sesión del navegador se refresca con
+  // useSession().update(), pero el JWT que lee este server component puede
+  // tardar un instante en reflejarlo. Si chequeáramos el rol del JWT antes
+  // que la existencia del perfil, a un organizador recién creado lo
+  // mandaríamos a la home sin explicación — indistinguible de estar
+  // deslogueado.
+  if (!organizer) {
+    if (session.user.role !== "ORGANIZER" && !isAdmin(session.user.role)) redirect("/");
+    redirect("/organizador/perfil/nuevo");
+  }
 
   const activeTournaments = organizer.tournaments.filter((t) =>
     ["REGISTRATION_OPEN", "IN_PROGRESS"].includes(t.status)
