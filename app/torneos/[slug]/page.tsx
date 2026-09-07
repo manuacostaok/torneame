@@ -22,7 +22,9 @@ export default async function TournamentPage({ params }: { params: Promise<{ slu
       game: true,
       organizer: true,
       _count: { select: { registrations: true } },
-      registrations: { select: { playerId: true, player: { select: { user: { select: { name: true } } } } } },
+      registrations: {
+        select: { playerId: true, player: { select: { userId: true, user: { select: { name: true } } } } },
+      },
       bracket: true,
       comments: {
         orderBy: { createdAt: "desc" },
@@ -37,6 +39,9 @@ export default async function TournamentPage({ params }: { params: Promise<{ slu
 
   const session = await auth();
   const isOwner = session?.user?.id === tournament.organizer.userId;
+  const isRegistered = Boolean(
+    session?.user && tournament.registrations.some((r) => r.player.userId === session.user!.id)
+  );
 
   const currentPrize = calculatePrizePool(
     Number(tournament.prizePoolBase),
@@ -114,6 +119,7 @@ export default async function TournamentPage({ params }: { params: Promise<{ slu
             <RegisterButton
               tournamentId={tournament.id}
               isLoggedIn={!!session?.user}
+              isRegistered={isRegistered}
               spotsLeft={tournament.maxPlayers - tournament._count.registrations}
               entryFee={Number(tournament.entryFee)}
               organizerPaymentAlias={tournament.organizer.paymentAlias}
