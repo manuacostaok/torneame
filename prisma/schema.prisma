@@ -230,6 +230,19 @@ model Match {
   winnerId     String?
   status       MatchStatus @default(PENDING)
   scheduledAt  DateTime?
+  // Cuándo el organizador convocó a los dos jugadores a jugar — dispara el
+  // timer de descalificación por ausencia (ver app/actions/matches.ts).
+  calledAt     DateTime?
+  // Texto libre ("Mesa 3", "PS5 #2") en vez de un modelo de estaciones
+  // propio: para el tamaño de evento que atiende Torneame hoy alcanza, y
+  // no fuerza al organizador a precargar un mapa de estaciones antes.
+  station      String?
+  // Auto-reporte de resultado por los jugadores: cada uno carga lo que vio
+  // sin depender de que el organizador esté mirando esa mesa. Si ambos
+  // reportes coinciden se confirma solo (ver submitPlayerReport); si no
+  // coinciden, quedan los dos guardados acá para que el organizador
+  // destrabe a mano. Shape: { A?: {scoreA,scoreB,reportedAt}, B?: {...} }
+  pendingReports Json?
 }
 
 model Notification {
