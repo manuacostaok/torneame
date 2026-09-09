@@ -1,4 +1,5 @@
 import { PowerMushroomIcon, VersusIcon, SpeedyCritterIcon } from "./icons/GamerIcons";
+import { Starfield } from "./Starfield";
 
 // Fondo estilo arcade — reemplazó al viejo fondo de círculos difuminados.
 // Todo CSS/SVG puro (sin canvas, sin JS en el hilo principal), respeta
@@ -76,7 +77,7 @@ export function PacmanBackground({ className = "" }: { className?: string }) {
       className={`pointer-events-none absolute inset-0 overflow-hidden -z-10 ${className}`}
       aria-hidden="true"
     >
-      <div className="maze-grid" />
+      <Starfield />
 
       {GAMER_ICONS.map(({ Icon, style }, i) => (
         <div key={i} className="gamer-icon" style={style}>

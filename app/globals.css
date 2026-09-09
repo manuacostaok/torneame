@@ -143,30 +143,6 @@ h3 {
   background-repeat: repeat-x;
 }
 
-/* Laberinto de fondo — grilla de líneas finas, sugiere pasillos de
-   maze sin tener que dibujar un layout real (pesado, y no hace falta:
-   es decoración, no un tablero jugable). */
-.maze-grid {
-  position: absolute;
-  inset: 0;
-  opacity: 0.07;
-  background-image:
-    repeating-linear-gradient(
-      0deg,
-      var(--text-secondary) 0,
-      var(--text-secondary) 1px,
-      transparent 1px,
-      transparent 42px
-    ),
-    repeating-linear-gradient(
-      90deg,
-      var(--text-secondary) 0,
-      var(--text-secondary) 1px,
-      transparent 1px,
-      transparent 42px
-    );
-}
-
 /* Corredor veloz — criatura original (SpeedyCritterIcon), no un
    personaje puntual, con líneas de velocidad detrás. Pasa rápido y poco
    seguido, como un cameo. */
