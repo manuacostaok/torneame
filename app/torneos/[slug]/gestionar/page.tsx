@@ -5,8 +5,10 @@ import Link from "next/link";
 import { StartTournamentButton } from "./StartTournamentButton";
 import { MatchControls } from "./MatchControls";
 import { AdvancePlayoffsButton } from "./AdvancePlayoffsButton";
+import { BuyTournamentProButton } from "./BuyTournamentProButton";
 import { BracketMatch, StoredBracket } from "@/lib/brackets/types";
 import { calculateStandings } from "@/lib/brackets/roundRobin";
+import { isTournamentPro } from "@/lib/tournamentConfig";
 
 interface MatchRowData {
   scoreA: number | null;
@@ -32,6 +34,7 @@ export default async function ManageTournamentPage({
     include: {
       organizer: true,
       bracket: true,
+      proPurchase: true,
       registrations: { include: { player: { include: { user: true } } } },
     },
   });
@@ -52,6 +55,7 @@ export default async function ManageTournamentPage({
           ← Volver al torneo
         </Link>
         <h1 className="mt-3 text-xl font-medium">Gestionar {tournament.name}</h1>
+        {!isTournamentPro(tournament) && <BuyTournamentProButton tournamentId={tournament.id} />}
         <div className="mt-6 rounded-xl bg-surface-1 p-4 text-sm">
           <p>{tournament.registrations.length} inscriptos — {checkedInCount} con check-in</p>
           <p className="mt-2 text-secondary">
@@ -94,6 +98,7 @@ export default async function ManageTournamentPage({
         ← Volver al torneo
       </Link>
       <h1 className="mt-3 text-xl font-medium">Gestionar {tournament.name}</h1>
+      {!isTournamentPro(tournament) && <BuyTournamentProButton tournamentId={tournament.id} />}
 
       {stored.kind === "bracket" && (
         <BracketMatches matches={stored.matches} nameMap={nameMap} matchRowById={matchRowById} />

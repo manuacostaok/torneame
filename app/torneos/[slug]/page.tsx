@@ -10,6 +10,7 @@ import { calculatePrizePool } from "@/lib/prizePool";
 import { notFound } from "next/navigation";
 import { JoystickLogo } from "@/app/components/JoystickLogo";
 import { NavAuthCTA } from "@/app/components/NavAuthCTA";
+import { isTournamentPro } from "@/lib/tournamentConfig";
 import Link from "next/link";
 
 export const revalidate = 30;
@@ -26,6 +27,7 @@ export default async function TournamentPage({ params }: { params: Promise<{ slu
         select: { playerId: true, player: { select: { userId: true, user: { select: { name: true } } } } },
       },
       bracket: true,
+      proPurchase: true,
       comments: {
         orderBy: { createdAt: "desc" },
         take: 20,
@@ -187,7 +189,7 @@ export default async function TournamentPage({ params }: { params: Promise<{ slu
             Torneame se difunda con cada torneo que publica (parte de la
             estrategia de crecimiento), el PRO paga justamente para sacarse
             esto de encima */}
-        {tournament.organizer.plan !== "PRO" && (
+        {!isTournamentPro(tournament) && (
           <p className="mt-10 text-center text-xs text-muted">
             Organizado con Torneame
           </p>

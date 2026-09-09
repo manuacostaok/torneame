@@ -1,16 +1,20 @@
 "use server";
 
 import { prisma } from "@/lib/prisma";
-import { requireRole } from "@/auth";
+import { requireRole, isAdmin } from "@/auth";
 import { assertSameOrigin } from "@/lib/security";
-import { MercadoPagoConfig, PreApproval } from "mercadopago";
+import { MercadoPagoConfig, PreApproval, Preference } from "mercadopago";
 import { wrapAction } from "@/lib/actionResult";
 
 const mpClient = new MercadoPagoConfig({ accessToken: process.env.MERCADOPAGO_ACCESS_TOKEN! });
 
-// Precio del plan PRO — vive acá como única fuente de verdad, no
-// hardcodeado también en el checkout, para no desincronizar los dos
-const PRO_MONTHLY_PRICE_ARS = 12000;
+// Precios del plan PRO — viven acá como única fuente de verdad, no
+// hardcodeados también en el checkout, para no desincronizar los dos.
+// Dos formas de pagarlo: suscripción mensual (ilimitado) o por torneo
+// suelto (para quien arma un evento puntual y no quiere atarse a un
+// mensual que va a usar una sola vez).
+const PRO_MONTHLY_PRICE_ARS = 25000;
+const PRO_PER_TOURNAMENT_PRICE_ARS = 10000;
 
 /**
  * Arranca la suscripción real vía Mercado Pago (preapproval = suscripción
@@ -60,6 +64,75 @@ export async function activateProPlan(organizerId: string) {
   });
 }
 
+/**
+ * Llamada desde el webhook cuando confirma (o rechaza) el pago de PRO por
+ * torneo suelto — mismo criterio que activateProPlan: el estado lo decide
+ * el webhook, nunca el cliente.
+ */
+export async function resolveTournamentProPurchase(purchaseId: string, approved: boolean) {
+  await prisma.tournamentProPurchase.update({
+    where: { id: purchaseId },
+    data: { status: approved ? "APPROVED" : "REJECTED" },
+  });
+}
+
+/**
+ * PRO para un torneo puntual — mismo mecanismo de cobro único que
+ * buyProduct() para la tienda (Preference de Mercado Pago, no
+ * PreApproval), pero activa marca blanca + TV solo para ESE torneo, no
+ * para el organizador entero. Pensado para quien arma un evento grande
+ * una vez y no quiere pagar el mensual para usarlo una sola vez.
+ */
+async function buyTournamentPro(tournamentId: string) {
+  await assertSameOrigin();
+  const session = await requireRole(["ORGANIZER", "ADMIN"]);
+
+  const tournament = await prisma.tournament.findUnique({
+    where: { id: tournamentId },
+    include: { organizer: true, proPurchase: true },
+  });
+  if (!tournament) throw new Error("Torneo no encontrado");
+  if (tournament.organizer.userId !== session.user.id && !isAdmin(session.user.role)) {
+    throw new Error("Este torneo no te pertenece");
+  }
+  if (tournament.organizer.plan === "PRO") {
+    throw new Error("Ya tenés el plan PRO activo para todos tus torneos");
+  }
+  if (tournament.proPurchase?.status === "APPROVED") {
+    throw new Error("Este torneo ya tiene PRO activado");
+  }
+
+  // Idempotente: si ya había un intento PENDING (por ejemplo, abrió el
+  // checkout y no llegó a pagar), lo reusa en vez de crear uno nuevo.
+  const purchase = await prisma.tournamentProPurchase.upsert({
+    where: { tournamentId },
+    create: { tournamentId, amount: PRO_PER_TOURNAMENT_PRICE_ARS, status: "PENDING" },
+    update: {},
+  });
+
+  const preference = new Preference(mpClient);
+  const result = await preference.create({
+    body: {
+      items: [
+        {
+          id: purchase.id,
+          title: `Torneame PRO para "${tournament.name}"`,
+          quantity: 1,
+          unit_price: PRO_PER_TOURNAMENT_PRICE_ARS,
+        },
+      ],
+      external_reference: `tournament-pro:${purchase.id}`,
+      notification_url: `${process.env.APP_URL}/api/webhooks/mercadopago`,
+      back_urls: {
+        success: `${process.env.APP_URL}/torneos/${tournamentId}/gestionar?pro=pendiente`,
+        failure: `${process.env.APP_URL}/torneos/${tournamentId}/gestionar`,
+      },
+    },
+  });
+
+  return { checkoutUrl: result.init_point };
+}
+
 async function setCustomDomain(customDomain: string) {
   const session = await requireRole(["ORGANIZER"]);
   const organizer = await prisma.organizerProfile.findUnique({
@@ -84,12 +157,14 @@ function addOneMonth(date: Date) {
 
 // Ver lib/actionResult.ts — Next.js reemplaza en producción el mensaje de
 // cualquier error tirado directo desde una Server Action por uno genérico.
-// activateProPlan queda afuera a propósito: la llama el webhook de
-// Mercado Pago (una Route Handler, no un componente cliente), no hay
-// límite de Server Action que cruzar ahí.
+// activateProPlan y resolveTournamentProPurchase quedan afuera a
+// propósito: las llama el webhook de Mercado Pago (una Route Handler, no
+// un componente cliente), no hay límite de Server Action que cruzar ahí.
 const wrappedStartProSubscription = wrapAction(startProSubscription);
+const wrappedBuyTournamentPro = wrapAction(buyTournamentPro);
 const wrappedSetCustomDomain = wrapAction(setCustomDomain);
 export {
   wrappedStartProSubscription as startProSubscription,
+  wrappedBuyTournamentPro as buyTournamentPro,
   wrappedSetCustomDomain as setCustomDomain,
 };

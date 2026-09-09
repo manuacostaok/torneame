@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { auth, isAdmin } from "@/auth";
 import { redirect, notFound } from "next/navigation";
 import { BracketMatch, StoredBracket } from "@/lib/brackets/types";
+import { isTournamentPro } from "@/lib/tournamentConfig";
 import Link from "next/link";
 
 export const revalidate = 10; // el venue necesita que esto se sienta "en vivo"
@@ -22,6 +23,7 @@ export default async function TvBracketPage({ params }: { params: Promise<{ slug
       bracket: true,
       game: true,
       organizer: true,
+      proPurchase: true,
       registrations: { select: { playerId: true, player: { select: { user: { select: { name: true } } } } } },
     },
   });
@@ -32,11 +34,12 @@ export default async function TvBracketPage({ params }: { params: Promise<{ slug
 
   if (!tournament.bracket) notFound();
 
-  // La vista TV es un beneficio del plan PRO: mostrar el bracket en una
-  // pantalla grande en vivo es exactamente el tipo de pulido que separa un
-  // torneo "de verdad" de uno amateur, y es donde el organizador FREE ve
-  // el valor concreto de pasarse a PRO.
-  if (tournament.organizer.plan !== "PRO" && !isAdmin(session.user.role)) {
+  // La vista TV es un beneficio del plan PRO (mensual, o comprado suelto
+  // para este torneo puntual): mostrar el bracket en una pantalla grande
+  // en vivo es exactamente el tipo de pulido que separa un torneo "de
+  // verdad" de uno amateur, y es donde el organizador FREE ve el valor
+  // concreto de pasarse a PRO.
+  if (!isTournamentPro(tournament) && !isAdmin(session.user.role)) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-black px-6 text-center text-white">
         <p className="text-sm text-[#8a93a6]">{tournament.name}</p>
@@ -49,10 +52,10 @@ export default async function TvBracketPage({ params }: { params: Promise<{ slug
           instalar nada.
         </p>
         <Link
-          href="/organizador/dashboard"
+          href={`/torneos/${tournament.id}/gestionar`}
           className="mt-2 rounded-md bg-primary px-4 py-2 text-sm text-white"
         >
-          Volver a mi panel
+          Activar PRO para este torneo
         </Link>
       </div>
     );

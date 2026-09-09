@@ -5,6 +5,7 @@ import { GalaxianBackground } from "@/app/components/GalaxianBackground";
 import { suggestBestTiming, suggestBestFormat } from "@/lib/insights";
 import { SignOutButton } from "@/app/components/SignOutButton";
 import { PaymentAliasEditor } from "./PaymentAliasEditor";
+import { UpgradeToProButton } from "./UpgradeToProButton";
 import Link from "next/link";
 
 export default async function OrganizerDashboard() {
@@ -121,6 +122,8 @@ export default async function OrganizerDashboard() {
         </div>
 
         <PaymentAliasEditor currentAlias={organizer.paymentAlias ?? ""} />
+
+        {organizer.plan !== "PRO" && <UpgradeToProButton />}
 
         {(timingSuggestion || formatSuggestion) && (
           <div className="mt-4 rounded-xl bg-surface-1 p-4">

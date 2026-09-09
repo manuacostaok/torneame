@@ -10,3 +10,16 @@
  * torneos presenciales de FGC — no es un número inventado.
  */
 export const DQ_TIMER_MINUTES = 10;
+
+/**
+ * Un torneo tiene los beneficios de PRO (marca blanca, vista TV) si el
+ * organizador tiene PRO mensual, O si este torneo puntual lo compró
+ * suelto. Se centraliza acá para no repetir la condición en cada lugar
+ * que la necesita (la página del torneo, la vista TV).
+ */
+export function isTournamentPro(tournament: {
+  organizer: { plan: string };
+  proPurchase: { status: string } | null;
+}): boolean {
+  return tournament.organizer.plan === "PRO" || tournament.proPurchase?.status === "APPROVED";
+}

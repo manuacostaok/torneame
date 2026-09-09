@@ -177,6 +177,21 @@ model Tournament {
   bracket       Bracket?
   comments      Comment[]
   sponsors      Sponsor[]
+  proPurchase   TournamentProPurchase?
+}
+
+// PRO "por torneo suelto": para el organizador que arma un evento puntual
+// y no quiere pagar la suscripción mensual — activa marca blanca + TV para
+// ESE torneo nomás. Registro propio (no solo un booleano en Tournament)
+// para que el webhook de Mercado Pago tenga dónde confirmar el pago, mismo
+// patrón que ProductOrder para la tienda.
+model TournamentProPurchase {
+  id           String        @id @default(cuid())
+  tournamentId String        @unique
+  tournament   Tournament    @relation(fields: [tournamentId], references: [id])
+  amount       Decimal
+  status       PaymentStatus @default(PENDING)
+  createdAt    DateTime      @default(now())
 }
 
 model Registration {
