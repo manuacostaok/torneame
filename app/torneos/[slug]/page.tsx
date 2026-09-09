@@ -11,6 +11,8 @@ import { notFound } from "next/navigation";
 import { JoystickLogo } from "@/app/components/JoystickLogo";
 import { NavAuthCTA } from "@/app/components/NavAuthCTA";
 import { isTournamentPro } from "@/lib/tournamentConfig";
+import { CountUp } from "@/app/components/CountUp";
+import { StaggerIn } from "@/app/components/StaggerIn";
 import Link from "next/link";
 
 export const revalidate = 30;
@@ -128,10 +130,12 @@ export default async function TournamentPage({ params }: { params: Promise<{ slu
             />
           </div>
 
-          <div className="mt-4 grid grid-cols-3 gap-3">
+          <StaggerIn className="mt-4 grid grid-cols-3 gap-3" staggerMs={80}>
             <div className="rounded-md bg-surface-2 p-3">
               <p className="text-xs text-muted">Premio total</p>
-              <p className="font-medium text-[var(--text-warning)]">${currentPrize.toLocaleString("es-AR")}</p>
+              <p className="font-medium text-[var(--text-warning)]">
+                <CountUp value={currentPrize} prefix="$" />
+              </p>
               {isPrizeBoosted && (
                 <span className="block text-xs text-[var(--text-success)]">↑ escalando</span>
               )}
@@ -150,7 +154,7 @@ export default async function TournamentPage({ params }: { params: Promise<{ slu
                   : `$${Number(tournament.entryFee).toLocaleString("es-AR")}`}
               </p>
             </div>
-          </div>
+          </StaggerIn>
         </div>
 
         {/* Bracket en vivo */}

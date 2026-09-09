@@ -12,6 +12,7 @@ import { Footer } from "./components/Footer";
 import { JoystickLogo } from "./components/JoystickLogo";
 import { NavAuthCTA } from "./components/NavAuthCTA";
 import { FriendsModePromo } from "./components/FriendsModePromo";
+import { StaggerIn } from "./components/StaggerIn";
 import Link from "next/link";
 
 export const revalidate = 60;
@@ -57,7 +58,7 @@ export default async function LandingPage() {
       <section className="relative overflow-hidden py-10 text-center sm:py-16">
         <GalaxianBackground className="opacity-90" />
 
-        <div className="relative mx-auto max-w-2xl px-4">
+        <StaggerIn className="relative mx-auto max-w-2xl px-4" staggerMs={100}>
           <AnimatedLogoLockup size={48} titleAs="p" />
 
           <span className="mt-6 inline-block rounded-full bg-[var(--bg-danger)] px-3 py-1 text-xs text-[var(--text-danger)]">
@@ -81,7 +82,7 @@ export default async function LandingPage() {
               Quiero organizar
             </Link>
           </div>
-        </div>
+        </StaggerIn>
       </section>
 
       {/* Demo animada — el valor del producto sin necesidad de crear cuenta */}
@@ -102,7 +103,7 @@ export default async function LandingPage() {
         </p>
       </section>
 
-      <section className="mx-auto grid max-w-4xl grid-cols-1 gap-4 px-4 pb-8 sm:grid-cols-3">
+      <StaggerIn className="mx-auto grid max-w-4xl grid-cols-1 gap-4 px-4 pb-8 sm:grid-cols-3">
         {upcomingTournaments.map((t) => (
           <Link
             href={`/torneos/${t.id}`}
@@ -149,7 +150,7 @@ export default async function LandingPage() {
             Todavía no hay torneos publicados — sé el primero en organizar uno.
           </p>
         )}
-      </section>
+      </StaggerIn>
 
       {upcomingTournaments.length > 0 && (
         <div className="mx-auto max-w-4xl px-4 pb-14 text-center">

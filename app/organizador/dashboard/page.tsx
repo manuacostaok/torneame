@@ -6,6 +6,8 @@ import { suggestBestTiming, suggestBestFormat } from "@/lib/insights";
 import { SignOutButton } from "@/app/components/SignOutButton";
 import { PaymentAliasEditor } from "./PaymentAliasEditor";
 import { UpgradeToProButton } from "./UpgradeToProButton";
+import { CountUp } from "@/app/components/CountUp";
+import { StaggerIn } from "@/app/components/StaggerIn";
 import Link from "next/link";
 
 export default async function OrganizerDashboard() {
@@ -98,28 +100,32 @@ export default async function OrganizerDashboard() {
           </div>
         </div>
 
-        <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-3">
+        <StaggerIn className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-3" staggerMs={100}>
           <div className="rounded-xl bg-surface-1 p-4">
             <p className="text-xs text-muted">Recaudado total</p>
             <p className="mt-1 text-2xl font-medium text-[var(--text-warning)]">
-              ${totalRecaudado.toLocaleString("es-AR")}
+              <CountUp value={totalRecaudado} prefix="$" />
             </p>
           </div>
           <div className="rounded-xl bg-surface-1 p-4">
             <p className="text-xs text-muted">Torneos activos</p>
-            <p className="mt-1 text-2xl font-medium">{activeTournaments.length}</p>
+            <p className="mt-1 text-2xl font-medium">
+              <CountUp value={activeTournaments.length} />
+            </p>
           </div>
           <Link
             href="/organizador/pagos"
             className="rounded-xl bg-surface-1 p-4 transition hover:bg-surface-2"
           >
             <p className="text-xs text-muted">Pagos pendientes</p>
-            <p className="mt-1 text-2xl font-medium">{pendingPayments.length}</p>
+            <p className="mt-1 text-2xl font-medium">
+              <CountUp value={pendingPayments.length} />
+            </p>
             {pendingPayments.length > 0 && (
               <p className="mt-1 text-xs text-accent">Revisar comprobantes →</p>
             )}
           </Link>
-        </div>
+        </StaggerIn>
 
         <PaymentAliasEditor currentAlias={organizer.paymentAlias ?? ""} />
 
@@ -146,7 +152,7 @@ export default async function OrganizerDashboard() {
 
         <div className="mt-8">
           <p className="mb-3 text-sm text-secondary">Torneos activos</p>
-          <div className="flex flex-col gap-2">
+          <StaggerIn className="flex flex-col gap-2" staggerMs={60}>
             {activeTournaments.map((t) => (
               <div
                 key={t.id}
@@ -170,7 +176,7 @@ export default async function OrganizerDashboard() {
             {activeTournaments.length === 0 && (
               <p className="text-sm text-muted">No tenés torneos activos ahora.</p>
             )}
-          </div>
+          </StaggerIn>
         </div>
 
         {draftTournaments.length > 0 && (

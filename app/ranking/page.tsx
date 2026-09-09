@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { StaggerIn } from "@/app/components/StaggerIn";
 import Link from "next/link";
 
 export const revalidate = 120;
@@ -52,7 +53,7 @@ export default async function RankingPage({
         ))}
       </div>
 
-      <div className="mt-6 flex flex-col gap-2">
+      <StaggerIn className="mt-6 flex flex-col gap-2" staggerMs={25}>
         {players.map((p, i) => (
           <Link
             href={`/jugadores/${p.id}`}
@@ -75,7 +76,7 @@ export default async function RankingPage({
         {players.length === 0 && (
           <p className="text-sm text-muted">Todavía no hay jugadores rankeados acá.</p>
         )}
-      </div>
+      </StaggerIn>
     </main>
   );
 }
