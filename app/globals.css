@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Space+Grotesk:wght@500&family=Inter:wght@400;500&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500&family=JetBrains+Mono:wght@500;700&display=swap");
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -33,6 +33,10 @@
      el resto de la UI se queda en Inter/Space Grotesk, que siguen siendo
      mucho más legibles para texto largo (stats, comentarios, formularios) */
   --font-pixel: "Press Start 2P", "Space Grotesk", monospace;
+  /* Mono para datos "en vivo" (marcador, ticker, stats) — separa
+     visualmente "esto es un número que cambia" de la prosa normal,
+     mismo criterio que un scoreboard real usa tipografía tabular. */
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
 
   /* Colores semánticos para fondo oscuro — un rojo/verde pastel de modo
      claro (bg-red-100 estilo Tailwind default) se ve como un parche fuera
@@ -220,5 +224,43 @@ h3 {
   }
   .gamer-icon {
     animation: none !important;
+  }
+}
+
+/* Fósforo/scanline sutil detrás del hero — atmósfera "marcador CRT" del
+   rediseño de la home (dirección aprobada: puertas 1P/2P + scoreboard).
+   Puro CSS, opacidad muy baja a propósito: es textura, no protagonista. */
+.scanlines-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image: repeating-linear-gradient(
+    0deg,
+    rgba(0, 217, 192, 0.035) 0px,
+    rgba(0, 217, 192, 0.035) 1px,
+    transparent 1px,
+    transparent 3px
+  );
+}
+
+/* Ticker horizontal de torneos en vivo — scroll infinito con CSS puro
+   (la lista se duplica una vez en el JSX y esto la desplaza -50%, así
+   el loop no se nota). Se pausa por completo con reduced-motion. */
+@keyframes ticker-scroll {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.ticker-track {
+  animation: ticker-scroll 32s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ticker-track {
+    animation: none;
   }
 }
