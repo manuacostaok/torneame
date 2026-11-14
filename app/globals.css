@@ -57,6 +57,34 @@ h3 {
   font-family: "Space Grotesk", "Inter", system-ui, sans-serif;
 }
 
+/* Foco visible para navegación con teclado — antes no había ningún
+   estilo de foco en toda la app. Solo aparece con teclado (focus-visible),
+   no al hacer click con el mouse. El anillo usa el violeta de marca con
+   un offset oscuro para que se lea sobre cualquier superficie. */
+:focus-visible {
+  outline: 2px solid var(--text-accent);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+button:not(:disabled),
+[role="button"],
+summary {
+  cursor: pointer;
+}
+
+/* Quien pidió menos movimiento en su sistema no recibe animaciones de
+   entrada/transición — las específicas (pacman, íconos, naves) ya tenían
+   su propio manejo, esto cubre lo demás (framer-motion del logo, etc.) */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
 /* Fondo estilo arcade (PacmanBackground.tsx) — reemplazó al fondo de
    círculos difuminados por algo con más onda de videojuego. La "boca" de
    Pac-Man es un clip-path de 3 puntos que se anima entre abierto/cerrado

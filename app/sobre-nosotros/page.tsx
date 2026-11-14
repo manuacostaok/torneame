@@ -1,4 +1,4 @@
-export const metadata = { title: "Sobre nosotros — Torneame" };
+export const metadata = { title: "Sobre nosotros" };
 
 export default function SobreNosotrosPage() {
   return (

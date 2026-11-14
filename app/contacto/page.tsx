@@ -1,4 +1,4 @@
-export const metadata = { title: "Contacto — Torneame" };
+export const metadata = { title: "Contacto" };
 
 export default function ContactoPage() {
   return (

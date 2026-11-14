@@ -1,4 +1,4 @@
-export const metadata = { title: "Privacidad — Torneame" };
+export const metadata = { title: "Privacidad" };
 
 export default function PrivacidadPage() {
   return (

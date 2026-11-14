@@ -14,13 +14,15 @@ export async function generateMetadata({
   const game = await prisma.game.findUnique({ where: { id: gameId } });
   if (!game) return {};
 
-  const title = `Torneos de ${game.name} — Torneame`;
+  const title = `Torneos de ${game.name}`;
   const description = `Encontrá torneos de ${game.name} cerca tuyo, inscribite y competí por premios reales. Bracket en vivo, sin WhatsApp ni planillas.`;
 
   return {
+    // El layout raíz agrega " | Torneame" vía title.template; el título de
+    // Open Graph no pasa por el template, así que lo lleva completo.
     title,
     description,
-    openGraph: { title, description },
+    openGraph: { title: `${title} — Torneame`, description },
   };
 }
 
