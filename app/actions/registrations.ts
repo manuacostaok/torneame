@@ -4,6 +4,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { auth, isAdmin } from "@/auth";
 import { isRateLimited, assertSameOrigin } from "@/lib/security";
+import { wrapAction } from "@/lib/actionResult";
 
 const registerSchema = z.object({
   tournamentId: z.string(),
@@ -20,7 +21,7 @@ const registerSchema = z.object({
  * estado PENDING hasta que el organizador lo revise a mano y lo
  * apruebe o rechace desde confirmPayment().
  */
-export async function registerForTournament(input: z.infer<typeof registerSchema>) {
+async function registerForTournament(input: z.infer<typeof registerSchema>) {
   await assertSameOrigin();
   const session = await auth();
   if (!session?.user) throw new Error("Necesitás iniciar sesión para inscribirte");
@@ -33,21 +34,6 @@ export async function registerForTournament(input: z.infer<typeof registerSchema
 
   const { tournamentId, receiptImageUrl } = registerSchema.parse(input);
 
-  const tournament = await prisma.tournament.findUnique({
-    where: { id: tournamentId },
-    include: { _count: { select: { registrations: true } } },
-  });
-  if (!tournament) throw new Error("Torneo no encontrado");
-  if (tournament.status !== "REGISTRATION_OPEN") {
-    throw new Error("Las inscripciones para este torneo no están abiertas");
-  }
-  if (tournament._count.registrations >= tournament.maxPlayers) {
-    throw new Error("Ya no quedan cupos para este torneo");
-  }
-  if (Number(tournament.entryFee) > 0 && !receiptImageUrl) {
-    throw new Error("Subí el comprobante de la transferencia para inscribirte");
-  }
-
   const playerProfile = await prisma.playerProfile.findUnique({
     where: { userId: session.user.id },
   });
@@ -58,8 +44,38 @@ export async function registerForTournament(input: z.infer<typeof registerSchema
   });
   if (existing) throw new Error("Ya estás inscripto en este torneo");
 
-  const registration = await prisma.registration.create({
-    data: { tournamentId, playerId: playerProfile.id },
+  // El cupo se valida y reserva atómicamente con un advisory lock de
+  // Postgres sobre el torneo: sin esto, dos inscripciones que llegan casi
+  // al mismo tiempo con el último cupo libre pueden leer "hay lugar" antes
+  // de que cualquiera de las dos confirme, y el torneo termina con más
+  // inscriptos que maxPlayers (rompe el generador de brackets, que asume
+  // exactamente maxPlayers cupos). El lock serializa los intentos de
+  // inscripción de ESTE torneo entre sí — no afecta inscripciones a otros
+  // torneos — y funciona igual con varias instancias de Next.js corriendo,
+  // porque vive en Postgres, no en memoria del proceso.
+  const { registration, tournament } = await prisma.$transaction(async (tx) => {
+    await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${tournamentId})::bigint)`;
+
+    const tournament = await tx.tournament.findUnique({
+      where: { id: tournamentId },
+      include: { _count: { select: { registrations: true } } },
+    });
+    if (!tournament) throw new Error("Torneo no encontrado");
+    if (tournament.status !== "REGISTRATION_OPEN") {
+      throw new Error("Las inscripciones para este torneo no están abiertas");
+    }
+    if (tournament._count.registrations >= tournament.maxPlayers) {
+      throw new Error("Ya no quedan cupos para este torneo");
+    }
+    if (Number(tournament.entryFee) > 0 && !receiptImageUrl) {
+      throw new Error("Subí el comprobante de la transferencia para inscribirte");
+    }
+
+    const registration = await tx.registration.create({
+      data: { tournamentId, playerId: playerProfile.id },
+    });
+
+    return { registration, tournament };
   });
 
   // Torneo gratuito: no hay nada que transferir ni revisar, queda
@@ -86,7 +102,7 @@ export async function registerForTournament(input: z.infer<typeof registerSchema
  * existía antes. Idempotente a propósito: si ya se procesó, no vuelve a
  * disparar la recompensa de referido ni cambia nada.
  */
-export async function confirmPayment(registrationId: string, approved: boolean) {
+async function confirmPayment(registrationId: string, approved: boolean) {
   await assertSameOrigin();
   const session = await auth();
   if (!session?.user) throw new Error("Necesitás iniciar sesión");
@@ -133,21 +149,41 @@ async function rewardReferrerOnFirstPayment(registrationId: string) {
     where: { id: registrationId },
     include: { player: { include: { user: true } } },
   });
-  if (!registration?.player.user.referredById) return;
+  const referredById = registration?.player.user.referredById;
+  if (!registration || !referredById) return;
 
-  // Solo la primera vez: si el referido ya tiene otro pago aprobado antes
-  // de este, no volvemos a pagarle al referente
-  const previousApprovedPayments = await prisma.payment.count({
-    where: {
-      status: "APPROVED",
-      registration: { playerId: registration.playerId },
-      registrationId: { not: registrationId },
-    },
-  });
-  if (previousApprovedPayments > 0) return;
+  // Mismo patrón de advisory lock que registerForTournament: sin esto, dos
+  // pagos del mismo jugador referido aprobados por organizadores distintos
+  // casi al mismo tiempo pueden leer "0 pagos aprobados previos" antes de
+  // que cualquiera de las dos confirme, y el referente cobra el premio dos
+  // veces. El lock serializa por jugador referido, no afecta la aprobación
+  // de pagos de otros jugadores.
+  await prisma.$transaction(async (tx) => {
+    await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${registration.playerId})::bigint)`;
 
-  await prisma.user.update({
-    where: { id: registration.player.user.referredById },
-    data: { referralCreditsArs: { increment: REFERRAL_REWARD_ARS } },
+    // Solo la primera vez: si el referido ya tiene otro pago aprobado antes
+    // de este, no volvemos a pagarle al referente
+    const previousApprovedPayments = await tx.payment.count({
+      where: {
+        status: "APPROVED",
+        registration: { playerId: registration.playerId },
+        registrationId: { not: registrationId },
+      },
+    });
+    if (previousApprovedPayments > 0) return;
+
+    await tx.user.update({
+      where: { id: referredById },
+      data: { referralCreditsArs: { increment: REFERRAL_REWARD_ARS } },
+    });
   });
 }
+
+// Ver lib/actionResult.ts — Next.js reemplaza en producción el mensaje de
+// cualquier error tirado directo desde una Server Action por uno genérico.
+const wrappedRegisterForTournament = wrapAction(registerForTournament);
+const wrappedConfirmPayment = wrapAction(confirmPayment);
+export {
+  wrappedRegisterForTournament as registerForTournament,
+  wrappedConfirmPayment as confirmPayment,
+};

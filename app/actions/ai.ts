@@ -3,6 +3,7 @@
 import { auth, isAdmin } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { assertSameOrigin } from "@/lib/security";
+import { wrapAction } from "@/lib/actionResult";
 
 // Google Gemini — capa gratis generosa (con límite de pedidos por
 // minuto/día, no infinita) y lee imágenes además de texto, que es lo que
@@ -41,7 +42,7 @@ async function callGemini(parts: Array<{ text: string } | { inline_data: { mime_
  * Genera un texto listo para pegar en WhatsApp/redes invitando a
  * anotarse al torneo — el organizador hoy tiene que escribirlo a mano.
  */
-export async function generateTournamentPitch(tournamentId: string) {
+async function generateTournamentPitch(tournamentId: string) {
   await assertSameOrigin();
   const session = await auth();
   if (!session?.user) throw new Error("Necesitás iniciar sesión");
@@ -80,7 +81,7 @@ Datos del torneo:
  * quien decide "Pasa"/"No pasa" en /organizador/pagos, esto solo le da
  * una pista antes de mirar la imagen a ojo.
  */
-export async function analyzePaymentReceipt(registrationId: string) {
+async function analyzePaymentReceipt(registrationId: string) {
   const session = await auth();
   if (!session?.user) throw new Error("Necesitás iniciar sesión");
 
@@ -132,3 +133,12 @@ export async function analyzePaymentReceipt(registrationId: string) {
     return { esComprobante: false, montoEncontrado: null, coincide: false, nota: raw.slice(0, 200) };
   }
 }
+
+// Ver lib/actionResult.ts — Next.js reemplaza en producción el mensaje de
+// cualquier error tirado directo desde una Server Action por uno genérico.
+const wrappedGenerateTournamentPitch = wrapAction(generateTournamentPitch);
+const wrappedAnalyzePaymentReceipt = wrapAction(analyzePaymentReceipt);
+export {
+  wrappedGenerateTournamentPitch as generateTournamentPitch,
+  wrappedAnalyzePaymentReceipt as analyzePaymentReceipt,
+};

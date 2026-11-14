@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { createTournament } from "@/app/actions/tournaments";
 import { useToast } from "@/app/components/Toast";
 import { ImageUploader } from "@/app/components/ImageUploader";
+import { unwrapAction } from "@/lib/actionResult";
 
 interface Game {
   id: string;
@@ -13,12 +14,17 @@ interface Game {
 
 const STEPS = ["Datos básicos", "Formato y reglas", "Premios", "Inscripción", "Publicar"] as const;
 
+// Valor sentinela del <select> para "mi juego no está en la lista" — nunca
+// coincide con un cuid real de Game, así que no hay ambigüedad al leerlo.
+const CUSTOM_GAME_VALUE = "__custom__";
+
 // Mismo shape que el schema de zod del server action — repetido acá a
 // propósito: la validación real y la que no se puede saltear vive en el
 // servidor (app/actions/tournaments.ts); esto es solo para no dejar
 // avanzar de paso con campos vacíos y dar feedback inmediato al organizador.
 interface FormState {
   gameId: string;
+  customGameName: string;
   name: string;
   description: string;
   bannerImageUrl: string;
@@ -36,6 +42,7 @@ interface FormState {
 
 const initialState: FormState = {
   gameId: "",
+  customGameName: "",
   name: "",
   description: "",
   bannerImageUrl: "",
@@ -64,8 +71,14 @@ export function NewTournamentWizard({ games }: { games: Game[] }) {
   }
 
   function validateStep(): string | null {
-    if (step === 0 && (!form.gameId || form.name.trim().length < 3)) {
-      return "Elegí un juego y un nombre de al menos 3 caracteres";
+    if (step === 0) {
+      if (!form.gameId) return "Elegí un juego y un nombre de al menos 3 caracteres";
+      if (form.gameId === CUSTOM_GAME_VALUE && form.customGameName.trim().length < 2) {
+        return "Escribí el nombre del juego";
+      }
+      if (form.name.trim().length < 3) {
+        return "Elegí un juego y un nombre de al menos 3 caracteres";
+      }
     }
     if (step === 2 && Number(form.prizePoolBase) < 0) {
       return "El premio no puede ser negativo";
@@ -94,8 +107,11 @@ export function NewTournamentWizard({ games }: { games: Game[] }) {
     setError(null);
     startTransition(async () => {
       try {
-        const tournament = await createTournament({
-          gameId: form.gameId,
+        const isCustomGame = form.gameId === CUSTOM_GAME_VALUE;
+        const tournament = await unwrapAction(createTournament({
+          ...(isCustomGame
+            ? { gameName: form.customGameName.trim() }
+            : { gameId: form.gameId }),
           name: form.name,
           description: form.description || undefined,
           bannerImageUrl: form.bannerImageUrl || undefined,
@@ -109,7 +125,7 @@ export function NewTournamentWizard({ games }: { games: Game[] }) {
           registrationDeadline: new Date(form.registrationDeadline),
           maxPlayers: Number(form.maxPlayers),
           visibility: form.visibility,
-        });
+        }));
         // A publicar, no a la página pública — el torneo queda en
         // borrador hasta publicarlo, y ahí no se puede ni inscribir gente
         // ni verlo en los listados. Mandar directo a /torneos/[id] dejaba
@@ -152,7 +168,17 @@ export function NewTournamentWizard({ games }: { games: Game[] }) {
                 {g.name}
               </option>
             ))}
+            <option value={CUSTOM_GAME_VALUE}>Mi juego no está en la lista</option>
           </select>
+          {form.gameId === CUSTOM_GAME_VALUE && (
+            <input
+              value={form.customGameName}
+              onChange={(e) => update("customGameName", e.target.value)}
+              placeholder="Nombre del juego (ej. Tekken 8)"
+              maxLength={60}
+              className="rounded-md border border-strong px-3 py-2 text-sm"
+            />
+          )}
           <input
             value={form.name}
             onChange={(e) => update("name", e.target.value)}

@@ -10,8 +10,15 @@ export default async function NewTournamentPage() {
   // no queremos ni siquiera renderizar el formulario para alguien que no
   // puede usarlo — evita filtrar la existencia de la lista de juegos, etc.
   if (!session?.user) redirect("/login?redirect=/organizador/torneos/nuevo");
+
+  // El perfil en la base manda sobre el rol del JWT (ver mismo comentario
+  // en app/organizador/dashboard/page.tsx): un organizador recién promovido
+  // cuya sesión todavía no se refrescó no puede quedar bloqueado acá.
   if (session.user.role !== "ORGANIZER" && !isAdmin(session.user.role)) {
-    redirect("/registro?rol=organizador");
+    const organizer = await prisma.organizerProfile.findUnique({
+      where: { userId: session.user.id },
+    });
+    if (!organizer) redirect("/registro?rol=organizador");
   }
 
   const games = await prisma.game.findMany({ orderBy: { name: "asc" } });

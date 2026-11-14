@@ -4,6 +4,7 @@ import { useState } from "react";
 import { updateProfile } from "@/app/actions/auth";
 import { ImageUploader } from "@/app/components/ImageUploader";
 import { useToast } from "@/app/components/Toast";
+import { unwrapAction } from "@/lib/actionResult";
 
 export function ProfileForm({ name, avatarUrl }: { name: string; avatarUrl: string }) {
   const [formName, setFormName] = useState(name);
@@ -15,7 +16,7 @@ export function ProfileForm({ name, avatarUrl }: { name: string; avatarUrl: stri
     e.preventDefault();
     setLoading(true);
     try {
-      await updateProfile({ name: formName, avatarUrl: formAvatar || undefined });
+      await unwrapAction(updateProfile({ name: formName, avatarUrl: formAvatar || undefined }));
       toast("Perfil actualizado", "success");
     } catch (err) {
       toast(err instanceof Error ? err.message : "No se pudo guardar", "error");

@@ -29,3 +29,30 @@ export interface BracketStructure {
 }
 
 export class BracketError extends Error {}
+
+// GROUPS es el único formato cuyo Bracket.structureJson no es un
+// BracketStructure plano: primero hay una fase de grupos (cada uno con su
+// propio round robin) y recién cuando esa fase termina se arma la
+// eliminatoria. Se distingue por el campo `kind`, chequeado en tiempo de
+// ejecución por quien lee structureJson (server actions, BracketView, la
+// vista de TV) antes de asumir una forma u otra.
+export interface StoredGroupsStructure {
+  kind: "groups";
+  groups: {
+    id: string;
+    name: string;
+    playerNames: Record<string, string>;
+    structure: BracketStructure;
+  }[];
+  playersAdvancingPerGroup: number;
+  // Se completa recién cuando el organizador corre "Avanzar a playoffs"
+  // (ver advanceGroupsToPlayoffs en app/actions/bracket.ts) — hasta
+  // entonces el torneo se juega solo dentro de cada grupo.
+  playoffs: BracketStructure | null;
+}
+
+export interface StoredBracketStructure extends BracketStructure {
+  kind: "bracket";
+}
+
+export type StoredBracket = StoredBracketStructure | StoredGroupsStructure;

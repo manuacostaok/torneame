@@ -2,6 +2,7 @@ import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
+import { PlayerMatchCard } from "./PlayerMatchCard";
 
 export default async function MyTicketPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
@@ -16,6 +17,33 @@ export default async function MyTicketPage({ params }: { params: Promise<{ slug:
     include: { tournament: true },
   });
   if (!registration) notFound();
+
+  // Partido pendiente donde este jugador es parte, dentro de este torneo —
+  // para mostrarle el rival, la mesa y dejarlo auto-reportar el resultado
+  // sin depender de que el organizador esté mirando esa mesa en particular.
+  const currentMatch = await prisma.match.findFirst({
+    where: {
+      bracket: { tournamentId: slug },
+      status: { not: "FINISHED" },
+      OR: [{ playerAId: player.id }, { playerBId: player.id }],
+    },
+  });
+  let opponentName: string | null = null;
+  if (currentMatch) {
+    const opponentPlayerId =
+      currentMatch.playerAId === player.id ? currentMatch.playerBId : currentMatch.playerAId;
+    if (opponentPlayerId) {
+      const opponentProfile = await prisma.playerProfile.findUnique({
+        where: { id: opponentPlayerId },
+        include: { user: { select: { name: true } } },
+      });
+      opponentName = opponentProfile?.user.name ?? null;
+    }
+  }
+  const isPlayerA = currentMatch?.playerAId === player.id;
+  const myReport = (currentMatch?.pendingReports as { A?: unknown; B?: unknown } | null)?.[
+    isPlayerA ? "A" : "B"
+  ];
 
   const checkInUrl = `${process.env.APP_URL}/organizador/checkin/${registration.id}`;
   // Servicio externo de generación de QR — evita mantener una librería
@@ -41,6 +69,17 @@ export default async function MyTicketPage({ params }: { params: Promise<{ slug:
 
       {registration.checkedInAt && (
         <p className="mt-4 text-sm text-[var(--text-success)]">Ya hiciste check-in ✓</p>
+      )}
+
+      {currentMatch && opponentName && (
+        <PlayerMatchCard
+          matchId={currentMatch.id}
+          opponentName={opponentName}
+          station={currentMatch.station}
+          calledAt={currentMatch.calledAt ? currentMatch.calledAt.toISOString() : null}
+          isPlayerA={isPlayerA}
+          alreadyReported={Boolean(myReport)}
+        />
       )}
     </main>
   );

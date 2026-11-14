@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { createOrganizerProfile } from "@/app/actions/auth";
 import { useToast } from "@/app/components/Toast";
+import { unwrapAction } from "@/lib/actionResult";
 
 export default function NewOrganizerProfilePage() {
   const [orgName, setOrgName] = useState("");
@@ -34,12 +35,14 @@ export default function NewOrganizerProfilePage() {
     e.preventDefault();
     setLoading(true);
     try {
-      await createOrganizerProfile({
-        orgName,
-        slug,
-        bio: bio || undefined,
-        paymentAlias: paymentAlias || undefined,
-      });
+      await unwrapAction(
+        createOrganizerProfile({
+          orgName,
+          slug,
+          bio: bio || undefined,
+          paymentAlias: paymentAlias || undefined,
+        })
+      );
       // Si el usuario todavía era PLAYER, el server action ya lo promovió a
       // ORGANIZER en la base — esto refresca el JWT de la sesión actual con
       // el rol nuevo, para no tener que pedirle reloguear para poder crear

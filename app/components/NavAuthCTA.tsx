@@ -14,8 +14,13 @@ export function NavAuthCTA() {
   if (session?.user) return null;
 
   return (
-    <Link href="/registro" className="rounded-md bg-primary px-4 py-2 text-sm text-white">
-      Crear cuenta
-    </Link>
+    <div className="flex items-center gap-3">
+      <Link href="/login" className="text-sm text-secondary">
+        Iniciar sesión
+      </Link>
+      <Link href="/registro" className="rounded-md bg-primary px-4 py-2 text-sm text-white">
+        Crear cuenta
+      </Link>
+    </div>
   );
 }

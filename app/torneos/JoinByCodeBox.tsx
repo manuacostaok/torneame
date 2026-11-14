@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { findTournamentByCode } from "@/app/actions/tournaments";
 import { useToast } from "@/app/components/Toast";
+import { unwrapAction } from "@/lib/actionResult";
 
 export function JoinByCodeBox() {
   const [code, setCode] = useState("");
@@ -15,7 +16,7 @@ export function JoinByCodeBox() {
     e.preventDefault();
     setLoading(true);
     try {
-      const tournament = await findTournamentByCode(code);
+      const tournament = await unwrapAction(findTournamentByCode(code));
       router.push(`/torneos/${tournament.id}`);
     } catch (err) {
       toast(err instanceof Error ? err.message : "No se pudo buscar el código", "error");

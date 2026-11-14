@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { generateTournamentPitch } from "@/app/actions/ai";
 import { useToast } from "@/app/components/Toast";
+import { unwrapAction } from "@/lib/actionResult";
 
 export function TournamentPitchGenerator({ tournamentId }: { tournamentId: string }) {
   const [pitch, setPitch] = useState("");
@@ -12,7 +13,7 @@ export function TournamentPitchGenerator({ tournamentId }: { tournamentId: strin
   function handleGenerate() {
     startTransition(async () => {
       try {
-        const text = await generateTournamentPitch(tournamentId);
+        const text = await unwrapAction(generateTournamentPitch(tournamentId));
         setPitch(text);
       } catch (err) {
         toast(err instanceof Error ? err.message : "No se pudo generar el texto", "error");

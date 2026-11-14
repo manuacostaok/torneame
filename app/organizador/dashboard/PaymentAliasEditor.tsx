@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { updatePaymentAlias } from "@/app/actions/auth";
 import { useToast } from "@/app/components/Toast";
+import { unwrapAction } from "@/lib/actionResult";
 
 export function PaymentAliasEditor({ currentAlias }: { currentAlias: string }) {
   const [alias, setAlias] = useState(currentAlias);
@@ -17,7 +18,7 @@ export function PaymentAliasEditor({ currentAlias }: { currentAlias: string }) {
   async function handleSave() {
     setLoading(true);
     try {
-      await updatePaymentAlias(alias);
+      await unwrapAction(updatePaymentAlias(alias));
       setSavedAlias(alias);
       toast("Alias de pago actualizado", "success");
       setEditing(false);

@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
 import { createFriendDraw } from "@/lib/brackets/friendDraw";
 import { isRateLimited } from "@/lib/security";
+import { wrapAction } from "@/lib/actionResult";
 
 // Tope del plan gratuito — grupos más grandes quedan anotados como
 // upsell futuro (Bloque de monetización), no se cobra nada todavía en
@@ -32,7 +33,7 @@ const createFriendTournamentSchema = z.object({
     .max(FREE_MAX_PLAYERS, `El plan gratuito soporta hasta ${FREE_MAX_PLAYERS} jugadores`),
 });
 
-export async function createFriendTournament(
+async function createFriendTournament(
   input: z.infer<typeof createFriendTournamentSchema>
 ) {
   // No requiere estar logueado a propósito — es la puerta de entrada sin
@@ -61,6 +62,11 @@ export async function createFriendTournament(
 
   return friendTournament;
 }
+
+// Ver lib/actionResult.ts — Next.js reemplaza en producción el mensaje de
+// cualquier error tirado directo desde una Server Action por uno genérico.
+const wrappedCreateFriendTournament = wrapAction(createFriendTournament);
+export { wrappedCreateFriendTournament as createFriendTournament };
 
 /*
  * Nota sobre el rate limit anónimo: usar la clave "anon" para todo

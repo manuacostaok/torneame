@@ -2,17 +2,19 @@ import { NextRequest, NextResponse } from "next/server";
 import { MercadoPagoConfig, Payment, PreApproval } from "mercadopago";
 import { verifyMercadoPagoSignature, isRateLimited } from "@/lib/security";
 import { prisma } from "@/lib/prisma";
-import { activateProPlan } from "@/app/actions/plan";
+import { activateProPlan, resolveTournamentProPurchase } from "@/app/actions/plan";
 
 const mpClient = new MercadoPagoConfig({ accessToken: process.env.MERCADOPAGO_ACCESS_TOKEN! });
 
 // Las inscripciones a torneo ya no pasan por acá — se pagan por
 // transferencia directa al organizador (ver app/actions/registrations.ts).
-// Lo que sigue cobrándose con Mercado Pago de verdad son dos cosas, con
+// Lo que sigue cobrándose con Mercado Pago de verdad son tres cosas, con
 // dos formatos de notificación distintos:
-// - "payment": pedidos de la tienda de merchandising (cobro único).
+// - "payment": pedidos de la tienda de merchandising, o PRO por torneo
+//   suelto (cobro único en los dos casos, distinguidos por el prefijo del
+//   external_reference).
 // - "subscription_preapproval" / "subscription_authorized_payment": el
-//   plan PRO (suscripción recurrente).
+//   plan PRO mensual (suscripción recurrente).
 export async function POST(req: NextRequest) {
   // Capa 1 — rate limiting básico por IP, para que un endpoint público
   // no se pueda usar para bombardear la base de datos con requests falsos
@@ -78,21 +80,27 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ received: true });
   }
 
-  // "payment" (default): pagos únicos — solo la tienda por ahora
+  // "payment" (default): pagos únicos — tienda o PRO por torneo suelto
   const paymentClient = new Payment(mpClient);
   const payment = await paymentClient.get({ id: dataId });
 
   const externalReference = payment.external_reference;
-  if (!externalReference?.startsWith("product-order:")) {
-    return NextResponse.json({ error: "Referencia externa inválida" }, { status: 400 });
+  const approved = payment.status === "approved";
+
+  if (externalReference?.startsWith("product-order:")) {
+    const orderId = externalReference.replace("product-order:", "");
+    await prisma.productOrder.update({
+      where: { id: orderId },
+      data: { status: approved ? "APPROVED" : "REJECTED" },
+    });
+    return NextResponse.json({ received: true });
   }
 
-  const approved = payment.status === "approved";
-  const orderId = externalReference.replace("product-order:", "");
-  await prisma.productOrder.update({
-    where: { id: orderId },
-    data: { status: approved ? "APPROVED" : "REJECTED" },
-  });
+  if (externalReference?.startsWith("tournament-pro:")) {
+    const purchaseId = externalReference.replace("tournament-pro:", "");
+    await resolveTournamentProPurchase(purchaseId, approved);
+    return NextResponse.json({ received: true });
+  }
 
-  return NextResponse.json({ received: true });
+  return NextResponse.json({ error: "Referencia externa inválida" }, { status: 400 });
 }

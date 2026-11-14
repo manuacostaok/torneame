@@ -4,10 +4,12 @@ import { useState, useTransition } from "react";
 import { registerForTournament } from "@/app/actions/registrations";
 import { ImageUploader } from "@/app/components/ImageUploader";
 import { useToast } from "@/app/components/Toast";
+import { unwrapAction } from "@/lib/actionResult";
 
 interface RegisterButtonProps {
   tournamentId: string;
   isLoggedIn: boolean;
+  isRegistered: boolean;
   spotsLeft: number;
   entryFee: number;
   organizerPaymentAlias: string | null;
@@ -16,6 +18,7 @@ interface RegisterButtonProps {
 export function RegisterButton({
   tournamentId,
   isLoggedIn,
+  isRegistered,
   spotsLeft,
   entryFee,
   organizerPaymentAlias,
@@ -28,7 +31,7 @@ export function RegisterButton({
   function submit(receiptImageUrl?: string) {
     startTransition(async () => {
       try {
-        const result = await registerForTournament({ tournamentId, receiptImageUrl });
+        const result = await unwrapAction(registerForTournament({ tournamentId, receiptImageUrl }));
         if (result.needsReview) {
           toast("¡Comprobante recibido! El organizador lo va a revisar y confirmar.", "success");
         } else {
@@ -51,6 +54,14 @@ export function RegisterButton({
       return;
     }
     submit();
+  }
+
+  if (isRegistered) {
+    return (
+      <button disabled className="rounded-md bg-surface-2 px-5 py-2.5 text-sm text-[var(--text-success)]">
+        Ya estás inscripto ✓
+      </button>
+    );
   }
 
   if (spotsLeft <= 0) {

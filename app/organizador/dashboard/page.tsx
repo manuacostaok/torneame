@@ -5,12 +5,14 @@ import { GalaxianBackground } from "@/app/components/GalaxianBackground";
 import { suggestBestTiming, suggestBestFormat } from "@/lib/insights";
 import { SignOutButton } from "@/app/components/SignOutButton";
 import { PaymentAliasEditor } from "./PaymentAliasEditor";
+import { UpgradeToProButton } from "./UpgradeToProButton";
+import { CountUp } from "@/app/components/CountUp";
+import { StaggerIn } from "@/app/components/StaggerIn";
 import Link from "next/link";
 
 export default async function OrganizerDashboard() {
   const session = await auth();
   if (!session?.user) redirect("/login?redirect=/organizador/dashboard");
-  if (session.user.role !== "ORGANIZER" && !isAdmin(session.user.role)) redirect("/");
 
   const organizer = await prisma.organizerProfile.findUnique({
     where: { userId: session.user.id },
@@ -25,7 +27,18 @@ export default async function OrganizerDashboard() {
     },
   });
 
-  if (!organizer) redirect("/organizador/perfil/nuevo");
+  // El perfil de organizador en la base es la fuente de verdad, no el rol
+  // del JWT: justo después de promoverse de PLAYER a ORGANIZER (ver
+  // app/organizador/perfil/nuevo), la sesión del navegador se refresca con
+  // useSession().update(), pero el JWT que lee este server component puede
+  // tardar un instante en reflejarlo. Si chequeáramos el rol del JWT antes
+  // que la existencia del perfil, a un organizador recién creado lo
+  // mandaríamos a la home sin explicación — indistinguible de estar
+  // deslogueado.
+  if (!organizer) {
+    if (session.user.role !== "ORGANIZER" && !isAdmin(session.user.role)) redirect("/");
+    redirect("/organizador/perfil/nuevo");
+  }
 
   const activeTournaments = organizer.tournaments.filter((t) =>
     ["REGISTRATION_OPEN", "IN_PROGRESS"].includes(t.status)
@@ -87,30 +100,36 @@ export default async function OrganizerDashboard() {
           </div>
         </div>
 
-        <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-3">
+        <StaggerIn className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-3" staggerMs={100}>
           <div className="rounded-xl bg-surface-1 p-4">
             <p className="text-xs text-muted">Recaudado total</p>
             <p className="mt-1 text-2xl font-medium text-[var(--text-warning)]">
-              ${totalRecaudado.toLocaleString("es-AR")}
+              <CountUp value={totalRecaudado} prefix="$" />
             </p>
           </div>
           <div className="rounded-xl bg-surface-1 p-4">
             <p className="text-xs text-muted">Torneos activos</p>
-            <p className="mt-1 text-2xl font-medium">{activeTournaments.length}</p>
+            <p className="mt-1 text-2xl font-medium">
+              <CountUp value={activeTournaments.length} />
+            </p>
           </div>
           <Link
             href="/organizador/pagos"
             className="rounded-xl bg-surface-1 p-4 transition hover:bg-surface-2"
           >
             <p className="text-xs text-muted">Pagos pendientes</p>
-            <p className="mt-1 text-2xl font-medium">{pendingPayments.length}</p>
+            <p className="mt-1 text-2xl font-medium">
+              <CountUp value={pendingPayments.length} />
+            </p>
             {pendingPayments.length > 0 && (
               <p className="mt-1 text-xs text-accent">Revisar comprobantes →</p>
             )}
           </Link>
-        </div>
+        </StaggerIn>
 
         <PaymentAliasEditor currentAlias={organizer.paymentAlias ?? ""} />
+
+        {organizer.plan !== "PRO" && <UpgradeToProButton />}
 
         {(timingSuggestion || formatSuggestion) && (
           <div className="mt-4 rounded-xl bg-surface-1 p-4">
@@ -133,28 +152,31 @@ export default async function OrganizerDashboard() {
 
         <div className="mt-8">
           <p className="mb-3 text-sm text-secondary">Torneos activos</p>
-          <div className="flex flex-col gap-2">
+          <StaggerIn className="flex flex-col gap-2" staggerMs={60}>
             {activeTournaments.map((t) => (
-              <Link
+              <div
                 key={t.id}
-                href={`/torneos/${t.id}`}
-                className="flex items-center justify-between rounded-md bg-surface-1 p-3 transition hover:bg-surface-2"
+                className="flex items-center justify-between rounded-md bg-surface-1 p-3"
               >
-                <div>
-                  <p className="font-medium">{t.name}</p>
+                <Link href={`/torneos/${t.id}`} className="min-w-0">
+                  <p className="truncate font-medium">{t.name}</p>
                   <p className="text-sm text-secondary">
-                    {t._count.registrations}/{t.maxPlayers} inscriptos
+                    {t._count.registrations}/{t.maxPlayers} inscriptos ·{" "}
+                    {t.status === "IN_PROGRESS" ? "En vivo" : "Inscripción abierta"}
                   </p>
-                </div>
-                <span className="text-xs text-secondary">
-                  {t.status === "IN_PROGRESS" ? "En vivo" : "Inscripción abierta"}
-                </span>
-              </Link>
+                </Link>
+                <Link
+                  href={`/torneos/${t.id}/gestionar`}
+                  className="ml-3 flex-shrink-0 text-xs text-accent"
+                >
+                  {t.status === "IN_PROGRESS" ? "Gestionar partidos →" : "Generar bracket →"}
+                </Link>
+              </div>
             ))}
             {activeTournaments.length === 0 && (
               <p className="text-sm text-muted">No tenés torneos activos ahora.</p>
             )}
-          </div>
+          </StaggerIn>
         </div>
 
         {draftTournaments.length > 0 && (

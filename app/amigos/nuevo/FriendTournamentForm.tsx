@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { createFriendTournament } from "@/app/actions/friendTournaments";
 import { useToast } from "@/app/components/Toast";
+import { unwrapAction } from "@/lib/actionResult";
 
 const FREE_MAX_PLAYERS = 22;
 const MODE_PRESETS = ["1v1", "2v2", "3v3", "5v5", "6v6", "7v7"] as const;
@@ -35,7 +36,7 @@ export function FriendTournamentForm({ games }: { games: { id: string; name: str
 
     startTransition(async () => {
       try {
-        const result = await createFriendTournament({ gameId, mode, playerNames: cleanNames });
+        const result = await unwrapAction(createFriendTournament({ gameId, mode, playerNames: cleanNames }));
         toast("¡Equipos sorteados!", "success");
         router.push(`/amigos/${result.id}`);
       } catch (err) {

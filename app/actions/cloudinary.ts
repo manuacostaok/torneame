@@ -2,6 +2,7 @@
 
 import { v2 as cloudinary } from "cloudinary";
 import { auth } from "@/auth";
+import { wrapAction } from "@/lib/actionResult";
 
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -17,7 +18,7 @@ cloudinary.config({
  * cualquiera que se consiga el cloud name. El API secret nunca sale del
  * servidor — solo la firma (un hash, no reversible) y el timestamp.
  */
-export async function getCloudinaryUploadSignature() {
+async function getCloudinaryUploadSignature() {
   const session = await auth();
   if (!session?.user) throw new Error("Necesitás iniciar sesión para subir una imagen");
 
@@ -34,3 +35,8 @@ export async function getCloudinaryUploadSignature() {
     cloudName: process.env.CLOUDINARY_CLOUD_NAME,
   };
 }
+
+// Ver lib/actionResult.ts — Next.js reemplaza en producción el mensaje de
+// cualquier error tirado directo desde una Server Action por uno genérico.
+const wrappedGetCloudinaryUploadSignature = wrapAction(getCloudinaryUploadSignature);
+export { wrappedGetCloudinaryUploadSignature as getCloudinaryUploadSignature };

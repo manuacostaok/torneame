@@ -8,6 +8,12 @@ import { SponsorsSection } from "./SponsorsSection";
 import { TournamentPitchGenerator } from "./TournamentPitchGenerator";
 import { calculatePrizePool } from "@/lib/prizePool";
 import { notFound } from "next/navigation";
+import { JoystickLogo } from "@/app/components/JoystickLogo";
+import { NavAuthCTA } from "@/app/components/NavAuthCTA";
+import { isTournamentPro } from "@/lib/tournamentConfig";
+import { CountUp } from "@/app/components/CountUp";
+import { StaggerIn } from "@/app/components/StaggerIn";
+import Link from "next/link";
 
 export const revalidate = 30;
 
@@ -19,7 +25,11 @@ export default async function TournamentPage({ params }: { params: Promise<{ slu
       game: true,
       organizer: true,
       _count: { select: { registrations: true } },
+      registrations: {
+        select: { playerId: true, player: { select: { userId: true, user: { select: { name: true } } } } },
+      },
       bracket: true,
+      proPurchase: true,
       comments: {
         orderBy: { createdAt: "desc" },
         take: 20,
@@ -33,6 +43,9 @@ export default async function TournamentPage({ params }: { params: Promise<{ slu
 
   const session = await auth();
   const isOwner = session?.user?.id === tournament.organizer.userId;
+  const isRegistered = Boolean(
+    session?.user && tournament.registrations.some((r) => r.player.userId === session.user!.id)
+  );
 
   const currentPrize = calculatePrizePool(
     Number(tournament.prizePoolBase),
@@ -46,6 +59,27 @@ export default async function TournamentPage({ params }: { params: Promise<{ slu
       <PacmanBackground />
 
       <div className="mx-auto max-w-3xl">
+        {/* Quien llega acá por un link compartido (WhatsApp, redes) no pasó
+            por la home — sin este header no tenía forma de volver al resto
+            del sitio ni de loguearse/crear cuenta salvo el botón atrás. */}
+        <nav className="mb-4 flex items-center justify-between">
+          <Link href="/" className="flex items-center gap-2">
+            <JoystickLogo size={24} className="text-white" />
+            <span style={{ fontFamily: "var(--font-heading)" }} className="text-base font-medium">
+              Torneame
+            </span>
+          </Link>
+          <NavAuthCTA />
+        </nav>
+
+        {isOwner && (
+          <div className="mb-4 flex justify-end">
+            <Link href={`/torneos/${tournament.id}/gestionar`} className="text-xs text-accent">
+              {tournament.bracket ? "Gestionar partidos →" : "Generar bracket →"}
+            </Link>
+          </div>
+        )}
+
         {isOwner && <TournamentPitchGenerator tournamentId={tournament.id} />}
 
         {isOwner && tournament.visibility === "PRIVATE" && tournament.accessCode && (
@@ -89,16 +123,19 @@ export default async function TournamentPage({ params }: { params: Promise<{ slu
             <RegisterButton
               tournamentId={tournament.id}
               isLoggedIn={!!session?.user}
+              isRegistered={isRegistered}
               spotsLeft={tournament.maxPlayers - tournament._count.registrations}
               entryFee={Number(tournament.entryFee)}
               organizerPaymentAlias={tournament.organizer.paymentAlias}
             />
           </div>
 
-          <div className="mt-4 grid grid-cols-3 gap-3">
+          <StaggerIn className="mt-4 grid grid-cols-3 gap-3" staggerMs={80}>
             <div className="rounded-md bg-surface-2 p-3">
               <p className="text-xs text-muted">Premio total</p>
-              <p className="font-medium text-[var(--text-warning)]">${currentPrize.toLocaleString("es-AR")}</p>
+              <p className="font-medium text-[var(--text-warning)]">
+                <CountUp value={currentPrize} prefix="$" />
+              </p>
               {isPrizeBoosted && (
                 <span className="block text-xs text-[var(--text-success)]">↑ escalando</span>
               )}
@@ -117,14 +154,26 @@ export default async function TournamentPage({ params }: { params: Promise<{ slu
                   : `$${Number(tournament.entryFee).toLocaleString("es-AR")}`}
               </p>
             </div>
-          </div>
+          </StaggerIn>
         </div>
 
         {/* Bracket en vivo */}
         {tournament.bracket && (
           <div className="mt-6">
-            <p className="mb-2 text-sm text-secondary">Bracket en vivo</p>
-            <BracketView structureJson={tournament.bracket.structureJson} />
+            <div className="mb-2 flex items-center justify-between">
+              <p className="text-sm text-secondary">Bracket en vivo</p>
+              {isOwner && (
+                <a href={`/torneos/${tournament.id}/tv`} className="text-xs text-accent">
+                  Ver en TV →
+                </a>
+              )}
+            </div>
+            <BracketView
+              structureJson={tournament.bracket.structureJson}
+              nameMap={Object.fromEntries(
+                tournament.registrations.map((r) => [r.playerId, r.player.user.name])
+              )}
+            />
           </div>
         )}
 
@@ -144,7 +193,7 @@ export default async function TournamentPage({ params }: { params: Promise<{ slu
             Torneame se difunda con cada torneo que publica (parte de la
             estrategia de crecimiento), el PRO paga justamente para sacarse
             esto de encima */}
-        {tournament.organizer.plan !== "PRO" && (
+        {!isTournamentPro(tournament) && (
           <p className="mt-10 text-center text-xs text-muted">
             Organizado con Torneame
           </p>

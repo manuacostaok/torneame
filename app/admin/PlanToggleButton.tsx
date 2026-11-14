@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { adminSetOrganizerPlan } from "@/app/actions/admin";
 import { useToast } from "@/app/components/Toast";
+import { unwrapAction } from "@/lib/actionResult";
 
 export function PlanToggleButton({
   organizerId,
@@ -19,7 +20,7 @@ export function PlanToggleButton({
     const nextPlan = plan === "PRO" ? "FREE" : "PRO";
     startTransition(async () => {
       try {
-        await adminSetOrganizerPlan(organizerId, nextPlan);
+        await unwrapAction(adminSetOrganizerPlan(organizerId, nextPlan));
         setPlan(nextPlan);
         toast(`Ahora es ${nextPlan}`, "success");
       } catch (err) {

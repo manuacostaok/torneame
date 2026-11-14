@@ -5,6 +5,7 @@ import { hash } from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
 import { isRateLimited } from "@/lib/security";
+import { wrapAction } from "@/lib/actionResult";
 
 const registerSchema = z.object({
   name: z.string().trim().min(2).max(60),
@@ -14,7 +15,7 @@ const registerSchema = z.object({
   referralCode: z.string().optional(),
 });
 
-export async function registerUser(input: z.infer<typeof registerSchema>) {
+async function registerUser(input: z.infer<typeof registerSchema>) {
   if (isRateLimited(`register:${input.email}`, 5, 60_000)) {
     throw new Error("Demasiados intentos. Esperá un minuto.");
   }
@@ -63,7 +64,7 @@ const playerProfileSchema = z.object({
  * cuentas que puedan quedar sin perfil por otra vía (ej. una cuenta
  * cargada a mano desde el panel de admin).
  */
-export async function createPlayerProfile(input: z.infer<typeof playerProfileSchema>) {
+async function createPlayerProfile(input: z.infer<typeof playerProfileSchema>) {
   const session = await auth();
   if (!session?.user) throw new Error("Necesitás iniciar sesión");
 
@@ -103,7 +104,7 @@ const organizerProfileSchema = z.object({
  * PLAYER, lo promovemos acá; el cliente refresca la sesión con
  * useSession().update() para que el rol nuevo valga sin tener que reloguear.
  */
-export async function createOrganizerProfile(input: z.infer<typeof organizerProfileSchema>) {
+async function createOrganizerProfile(input: z.infer<typeof organizerProfileSchema>) {
   const session = await auth();
   if (!session?.user) throw new Error("Necesitás iniciar sesión");
 
@@ -133,7 +134,7 @@ export async function createOrganizerProfile(input: z.infer<typeof organizerProf
 }
 
 /** Para actualizar el alias de pago después de creado el perfil (ej. si lo cambió de banco). */
-export async function updatePaymentAlias(paymentAlias: string) {
+async function updatePaymentAlias(paymentAlias: string) {
   const session = await auth();
   if (!session?.user) throw new Error("Necesitás iniciar sesión");
 
@@ -154,7 +155,7 @@ const updateProfileSchema = z.object({
 });
 
 /** Edita nombre y foto de perfil — el email no se puede tocar acá porque es la credencial de login. */
-export async function updateProfile(input: z.infer<typeof updateProfileSchema>) {
+async function updateProfile(input: z.infer<typeof updateProfileSchema>) {
   const session = await auth();
   if (!session?.user) throw new Error("Necesitás iniciar sesión");
 
@@ -165,3 +166,18 @@ export async function updateProfile(input: z.infer<typeof updateProfileSchema>) 
     data: { name: data.name, avatarUrl: data.avatarUrl || null },
   });
 }
+
+// Ver lib/actionResult.ts — Next.js reemplaza en producción el mensaje de
+// cualquier error tirado directo desde una Server Action por uno genérico.
+const wrappedRegisterUser = wrapAction(registerUser);
+const wrappedCreatePlayerProfile = wrapAction(createPlayerProfile);
+const wrappedCreateOrganizerProfile = wrapAction(createOrganizerProfile);
+const wrappedUpdatePaymentAlias = wrapAction(updatePaymentAlias);
+const wrappedUpdateProfile = wrapAction(updateProfile);
+export {
+  wrappedRegisterUser as registerUser,
+  wrappedCreatePlayerProfile as createPlayerProfile,
+  wrappedCreateOrganizerProfile as createOrganizerProfile,
+  wrappedUpdatePaymentAlias as updatePaymentAlias,
+  wrappedUpdateProfile as updateProfile,
+};
