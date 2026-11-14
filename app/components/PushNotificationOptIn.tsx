@@ -1,5 +1,6 @@
 "use client";
 
+import { Icon } from "@/app/components/Icon";
 import { useState } from "react";
 import { subscribeToPush } from "@/app/actions/pushSubscriptions";
 import { useToast } from "./Toast";
@@ -40,7 +41,9 @@ export function PushNotificationOptIn() {
     toast("Notificaciones activadas", "success");
   }
 
-  if (status === "on") return <p className="text-xs text-secondary">🔔 Notificaciones activadas</p>;
+  if (status === "on") return <p className="flex items-center gap-1.5 text-xs text-secondary">
+      <Icon name="bell" className="h-3.5 w-3.5" /> Notificaciones activadas
+    </p>;
   if (status === "denied") {
     return (
       <p className="text-xs text-secondary">
@@ -55,7 +58,9 @@ export function PushNotificationOptIn() {
       disabled={status === "asking"}
       className="rounded-md border border-strong px-3 py-1.5 text-xs disabled:opacity-60"
     >
-      🔔 Activar notificaciones
+      <span className="inline-flex items-center gap-1.5">
+        <Icon name="bell" className="h-3.5 w-3.5" /> Activar notificaciones
+      </span>
     </button>
   );
 }

@@ -1,5 +1,6 @@
 "use client";
 
+import { Icon } from "@/app/components/Icon";
 import { useState, useTransition } from "react";
 import { generateTournamentPitch } from "@/app/actions/ai";
 import { useToast } from "@/app/components/Toast";
@@ -29,7 +30,9 @@ export function TournamentPitchGenerator({ tournamentId }: { tournamentId: strin
   return (
     <div className="mb-4 rounded-xl bg-surface-1 p-4 text-sm">
       <div className="flex items-center justify-between gap-3">
-        <p className="text-secondary">🤖 Texto para compartir el torneo, generado con IA</p>
+        <p className="flex items-center gap-1.5 text-secondary">
+          <Icon name="sparkles" /> Texto para compartir el torneo, generado con IA
+        </p>
         <button
           onClick={handleGenerate}
           disabled={isPending}

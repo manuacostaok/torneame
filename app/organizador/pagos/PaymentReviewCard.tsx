@@ -1,5 +1,6 @@
 "use client";
 
+import { Icon } from "@/app/components/Icon";
 import { useState, useTransition } from "react";
 import { confirmPayment } from "@/app/actions/registrations";
 import { analyzePaymentReceipt } from "@/app/actions/ai";
@@ -94,7 +95,13 @@ export function PaymentReviewCard({
           disabled={isChecking}
           className="mt-3 w-full rounded-md border border-dashed border-strong px-3 py-2 text-xs text-secondary disabled:opacity-60"
         >
-          {isChecking ? "Revisando con IA..." : "🤖 Revisar comprobante con IA"}
+          {isChecking ? (
+            "Revisando con IA..."
+          ) : (
+            <span className="inline-flex items-center justify-center gap-1.5">
+              <Icon name="sparkles" /> Revisar comprobante con IA
+            </span>
+          )}
         </button>
       )}
 

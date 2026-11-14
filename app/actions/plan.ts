@@ -1,5 +1,6 @@
 "use server";
 
+import { isProActive } from "@/lib/plan";
 import { prisma } from "@/lib/prisma";
 import { requireRole, isAdmin } from "@/auth";
 import { assertSameOrigin } from "@/lib/security";
@@ -32,7 +33,7 @@ async function startProSubscription() {
     where: { userId: session.user.id },
   });
   if (!organizer) throw new Error("Completá tu perfil de organizador primero");
-  if (organizer.plan === "PRO") throw new Error("Ya tenés el plan PRO activo");
+  if (isProActive(organizer)) throw new Error("Ya tenés el plan PRO activo");
 
   const preapproval = new PreApproval(mpClient);
   const result = await preapproval.create({
@@ -95,7 +96,7 @@ async function buyTournamentPro(tournamentId: string) {
   if (tournament.organizer.userId !== session.user.id && !isAdmin(session.user.role)) {
     throw new Error("Este torneo no te pertenece");
   }
-  if (tournament.organizer.plan === "PRO") {
+  if (isProActive(tournament.organizer)) {
     throw new Error("Ya tenés el plan PRO activo para todos tus torneos");
   }
   if (tournament.proPurchase?.status === "APPROVED") {
@@ -139,7 +140,7 @@ async function setCustomDomain(customDomain: string) {
     where: { userId: session.user.id },
   });
   if (!organizer) throw new Error("Perfil de organizador no encontrado");
-  if (organizer.plan !== "PRO") {
+  if (!isProActive(organizer)) {
     throw new Error("El dominio propio es una función del plan PRO");
   }
 

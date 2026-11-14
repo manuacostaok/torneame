@@ -1,5 +1,6 @@
 "use client";
 
+import { Icon } from "@/app/components/Icon";
 import { useEffect, useState } from "react";
 
 // Chrome/Android disparan este evento cuando la PWA cumple los
@@ -69,7 +70,7 @@ export function InstallAppBanner() {
     <div className="fixed inset-x-4 bottom-4 z-40 mx-auto max-w-sm rounded-xl bg-surface-1 p-4 shadow-xl sm:inset-x-auto sm:right-6">
       <div className="flex items-start gap-3">
         <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-surface-2">
-          🕹️
+          <Icon name="joystick" className="h-5 w-5 text-accent" />
         </div>
         <div className="min-w-0 flex-1">
           <p className="text-sm font-medium">Instalá Torneame</p>

@@ -1,3 +1,5 @@
+import { isProActive } from "@/lib/plan";
+
 // Constantes compartidas entre server actions y componentes cliente. Vive
 // separado de app/actions/matches.ts a propósito: un archivo "use server"
 // en Next.js solo puede exportar funciones async — una constante como esta
@@ -18,8 +20,8 @@ export const DQ_TIMER_MINUTES = 10;
  * que la necesita (la página del torneo, la vista TV).
  */
 export function isTournamentPro(tournament: {
-  organizer: { plan: string };
+  organizer: { plan: string; planExpiresAt?: Date | null };
   proPurchase: { status: string } | null;
 }): boolean {
-  return tournament.organizer.plan === "PRO" || tournament.proPurchase?.status === "APPROVED";
+  return isProActive(tournament.organizer) || tournament.proPurchase?.status === "APPROVED";
 }

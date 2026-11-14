@@ -1,3 +1,4 @@
+import { isProActive } from "@/lib/plan";
 import { auth, isAdmin } from "@/auth";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
@@ -129,7 +130,7 @@ export default async function OrganizerDashboard() {
 
         <PaymentAliasEditor currentAlias={organizer.paymentAlias ?? ""} />
 
-        {organizer.plan !== "PRO" && <UpgradeToProButton />}
+        {!isProActive(organizer) && <UpgradeToProButton />}
 
         {(timingSuggestion || formatSuggestion) && (
           <div className="mt-4 rounded-xl bg-surface-1 p-4">

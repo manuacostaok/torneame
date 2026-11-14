@@ -52,6 +52,7 @@ entorno (Settings → Environment Variables):
 | `APP_URL` | La completás en el paso 7, con la URL que te da Vercel |
 | `CLOUDINARY_CLOUD_NAME` / `CLOUDINARY_API_KEY` / `CLOUDINARY_API_SECRET` | Cloudinary (paso 4) |
 | `GEMINI_API_KEY` | Google Gemini (paso 5) — opcional |
+| `NEXT_PUBLIC_CONTACT_EMAIL` | Email público de contacto (se muestra en /contacto) |
 | `TWILIO_ACCOUNT_SID` / `TWILIO_AUTH_TOKEN` | Opcional — solo si querés WhatsApp ya andando |
 | `VAPID_PUBLIC_KEY` / `VAPID_PRIVATE_KEY` / `NEXT_PUBLIC_VAPID_PUBLIC_KEY` | Se generan una vez con `npx web-push generate-vapid-keys` (podés correrlo desde el botón de "Terminal" que trae el propio Vercel, si no tenés terminal local) |
 

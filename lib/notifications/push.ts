@@ -6,7 +6,11 @@ import { prisma } from "@/lib/prisma";
 // nuestro servidor frente a los servicios push de Chrome/Firefox/Safari.
 if (process.env.VAPID_PUBLIC_KEY && process.env.VAPID_PRIVATE_KEY) {
   webpush.setVapidDetails(
-    "mailto:soporte@torneame.app",
+    // VAPID acepta un mailto: o una URL https de contacto; no se inventa un
+    // mail que quizás no exista.
+    process.env.NEXT_PUBLIC_CONTACT_EMAIL
+      ? `mailto:${process.env.NEXT_PUBLIC_CONTACT_EMAIL}`
+      : (process.env.APP_URL ?? "https://torneame.vercel.app"),
     process.env.VAPID_PUBLIC_KEY,
     process.env.VAPID_PRIVATE_KEY
   );

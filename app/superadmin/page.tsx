@@ -1,3 +1,5 @@
+import { Icon } from "@/app/components/Icon";
+import { isProActive } from "@/lib/plan";
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
@@ -26,7 +28,9 @@ export default async function SuperAdminPanel() {
     <main className="mx-auto max-w-4xl px-4 py-10">
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-sm text-secondary">👑 Superadmin</p>
+          <p className="flex items-center gap-1.5 text-sm text-secondary">
+            <Icon name="crown" /> Superadmin
+          </p>
           <h1 className="text-xl font-medium">Accesos y suscripciones</h1>
         </div>
         <Link href="/admin" className="text-sm text-accent">
@@ -54,13 +58,13 @@ export default async function SuperAdminPanel() {
                 <p className="truncate text-xs text-muted">
                   {org.user.email}
                   {org.planExpiresAt &&
-                    ` · vence ${org.planExpiresAt.toLocaleDateString("es-AR")}`}
+                    ` · ${isProActive(org) ? "vence" : "venció"} ${org.planExpiresAt.toLocaleDateString("es-AR")}`}
                 </p>
               </div>
               <div className="flex flex-shrink-0 items-center gap-2">
                 <span
                   className={`rounded-md px-2 py-0.5 text-xs ${
-                    org.plan === "PRO" ? "bg-success text-success" : "bg-surface-2 text-muted"
+                    isProActive(org) ? "bg-success text-success" : "bg-surface-2 text-muted"
                   }`}
                 >
                   {org.plan}

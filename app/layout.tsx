@@ -23,13 +23,11 @@ export const metadata = {
     siteName: "Torneame",
     title: "Torneame — Tu torneo, sin el quilombo",
     description: SITE_DESCRIPTION,
-    images: [{ url: "/icon-512.png", width: 512, height: 512, alt: "Logo de Torneame" }],
   },
   twitter: {
-    card: "summary",
+    card: "summary_large_image",
     title: "Torneame — Tu torneo, sin el quilombo",
     description: SITE_DESCRIPTION,
-    images: ["/icon-512.png"],
   },
   manifest: "/manifest.webmanifest",
   icons: {

@@ -31,9 +31,10 @@ export function Footer() {
           </ul>
         </div>
       </div>
-      <p className="mx-auto mt-8 max-w-4xl text-xs text-muted">
-        © {new Date().getFullYear()} Torneame. Hecho en Argentina.
-      </p>
+      <div className="mx-auto mt-8 flex max-w-4xl flex-col gap-1 text-xs text-muted sm:flex-row sm:items-center sm:justify-between">
+        <p>© {new Date().getFullYear()} Torneame. Hecho en Argentina.</p>
+        <p className="text-[11px] tracking-wide">Desarrollado por Aura Soft Solutions</p>
+      </div>
     </footer>
   );
 }

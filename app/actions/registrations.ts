@@ -109,7 +109,10 @@ async function confirmPayment(registrationId: string, approved: boolean) {
 
   const registration = await prisma.registration.findUnique({
     where: { id: registrationId },
-    include: { tournament: { include: { organizer: true } } },
+    include: {
+      tournament: { include: { organizer: true } },
+      player: { include: { user: true } },
+    },
   });
   if (!registration) throw new Error("Inscripción no encontrada");
 
@@ -124,58 +127,47 @@ async function confirmPayment(registrationId: string, approved: boolean) {
     return payment; // ya se procesó antes, no hacemos nada de nuevo
   }
 
-  const updated = await prisma.payment.update({
-    where: { registrationId },
-    data: { status: approved ? "APPROVED" : "REJECTED" },
-  });
-
-  if (approved) {
-    await rewardReferrerOnFirstPayment(registrationId);
+  if (!approved) {
+    return prisma.payment.update({ where: { registrationId }, data: { status: "REJECTED" } });
   }
 
-  return updated;
-}
-
-/**
- * El crédito de referido se paga acá, no al registrarse, a propósito:
- * pagar por una cuenta creada (que puede ser fake o nunca volver) es
- * gastar plata en aire. Pagar cuando esa persona efectivamente puso
- * dinero real en la plataforma es la única señal que nos importa.
- */
-async function rewardReferrerOnFirstPayment(registrationId: string) {
   const REFERRAL_REWARD_ARS = 2000;
+  const referredById = registration.player.user.referredById;
 
-  const registration = await prisma.registration.findUnique({
-    where: { id: registrationId },
-    include: { player: { include: { user: true } } },
-  });
-  const referredById = registration?.player.user.referredById;
-  if (!registration || !referredById) return;
-
-  // Mismo patrón de advisory lock que registerForTournament: sin esto, dos
-  // pagos del mismo jugador referido aprobados por organizadores distintos
-  // casi al mismo tiempo pueden leer "0 pagos aprobados previos" antes de
-  // que cualquiera de las dos confirme, y el referente cobra el premio dos
-  // veces. El lock serializa por jugador referido, no afecta la aprobación
-  // de pagos de otros jugadores.
-  await prisma.$transaction(async (tx) => {
+  // Aprobar el pago y pagar el crédito de referido van en UNA sola
+  // transacción bajo el advisory lock del jugador referido. Si la
+  // aprobación se confirmara fuera del lock, dos pagos del mismo jugador
+  // aprobados a la vez se verían mutuamente como "ya hay otro aprobado" y
+  // ninguno pagaría el crédito. El crédito se paga acá, no al registrarse,
+  // a propósito: solo cuando la persona puso plata real en la plataforma.
+  return prisma.$transaction(async (tx) => {
     await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${registration.playerId})::bigint)`;
 
-    // Solo la primera vez: si el referido ya tiene otro pago aprobado antes
-    // de este, no volvemos a pagarle al referente
-    const previousApprovedPayments = await tx.payment.count({
+    // Releer bajo el lock: otra aprobación concurrente pudo haberlo procesado.
+    const current = await tx.payment.findUnique({ where: { registrationId } });
+    if (!current || current.status !== "PENDING") return current ?? payment;
+
+    const previousApproved = await tx.payment.count({
       where: {
         status: "APPROVED",
         registration: { playerId: registration.playerId },
         registrationId: { not: registrationId },
       },
     });
-    if (previousApprovedPayments > 0) return;
 
-    await tx.user.update({
-      where: { id: referredById },
-      data: { referralCreditsArs: { increment: REFERRAL_REWARD_ARS } },
+    const updated = await tx.payment.update({
+      where: { registrationId },
+      data: { status: "APPROVED" },
     });
+
+    if (referredById && previousApproved === 0) {
+      await tx.user.update({
+        where: { id: referredById },
+        data: { referralCreditsArs: { increment: REFERRAL_REWARD_ARS } },
+      });
+    }
+
+    return updated;
   });
 }
 

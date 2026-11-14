@@ -1,17 +1,18 @@
 "use client";
 
+import { Icon } from "@/app/components/Icon";
 import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 
 // Ciclo corto de estados que muestra el valor central del producto sin
 // que el visitante tenga que crear una cuenta para verlo: el bracket se
 // arma y se actualiza solo, a diferencia del papel y lapicera actual.
-const DEMO_STEPS = [
+const DEMO_STEPS: { round: number; label: string; champion?: boolean }[] = [
   { round: 1, label: "Facu vs Gaby" },
   { round: 1, label: "Facu gana 2–0" },
   { round: 2, label: "Facu vs Nico" },
   { round: 2, label: "Facu gana 2–1" },
-  { round: 3, label: "🏆 Facu, campeón" },
+  { round: 3, label: "Facu, campeón", champion: true },
 ];
 
 export function BracketDemo() {
@@ -34,6 +35,7 @@ export function BracketDemo() {
           transition={{ duration: 0.25 }}
           className="mt-3 text-lg font-medium"
         >
+          {DEMO_STEPS[step].champion && <Icon name="trophy" className="mr-1.5 h-5 w-5 align-[-3px] text-accent" />}
           {DEMO_STEPS[step].label}
         </motion.p>
       </AnimatePresence>

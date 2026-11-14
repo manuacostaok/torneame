@@ -11,10 +11,27 @@ import { unwrapAction } from "@/lib/actionResult";
 // se salta entero sin DATABASE_URL.
 const hasDb = Boolean(process.env.DATABASE_URL);
 
-vi.mock("@/auth", () => ({
-  auth: vi.fn(),
-  isAdmin: (role: string) => role === "ADMIN" || role === "SUPERADMIN",
-}));
+// requireRole se reimplementa acá (misma lógica que auth.ts) porque el
+// módulo real no se puede cargar fuera del runtime de Next.js: las actions
+// de bracket/matches autorizan con requireRole, no con auth() directo.
+vi.mock("@/auth", () => {
+  const auth = vi.fn();
+  return {
+    auth,
+    isAdmin: (role: string) => role === "ADMIN" || role === "SUPERADMIN",
+    requireRole: async (allowed: string[]) => {
+      const session = await auth();
+      if (!session?.user) throw new Error("No autenticado");
+      const roles = allowed.includes("ADMIN") ? [...allowed, "SUPERADMIN"] : allowed;
+      if (!roles.includes(session.user.role)) throw new Error("No tenés permiso para hacer esto");
+      return session;
+    },
+  };
+});
+
+// revalidatePath exige el contexto de render de Next.js (static generation
+// store), que no existe en un test de Node: acá no es lo que se ejercita.
+vi.mock("next/cache", () => ({ revalidatePath: vi.fn(), revalidateTag: vi.fn() }));
 
 vi.mock("@/lib/security", () => ({
   assertSameOrigin: vi.fn().mockResolvedValue(undefined),
